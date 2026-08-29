@@ -49,7 +49,7 @@ Puis ouvrir `http://localhost:3000`.
 
 ### Option 3 — Fichier statique (sans serveur)
 
-Simplement double-cliquer sur `index.html` ou l'ouvrir via `file:///` dans votre navigateur. L'interface et la bibliothèque fonctionnent, mais **Web MIDI et Web Serial ne sont pas disponibles** — vous pouvez éditer les presets manuellement mais pas envoyer de MIDI ni synchroniser via USB.
+Simplement double-cliquer sur `index.html` ou l'ouvrir via `file:///` dans votre navigateur.
 
 ## Utilisation
 
