@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TONEX Pedal Controller — Documentation</title>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --surface: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --accent: #e94560;
+            --accent2: #533483;
+            --blue: #2196f3;
+            --green: #4caf50;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 60px 24px;
+            text-align: center;
+            border-bottom: 3px solid var(--accent);
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 2.5em;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .hero p {
+            font-size: 1.15em;
+            color: var(--muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .hero .version {
+            display: inline-block;
+            background: var(--accent2);
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            margin-top: 16px;
+        }
+
+        .lang-toggle {
+            position: absolute;
+            top: 20px;
+            right: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--accent);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: bold;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .lang-toggle:hover {
+            background: var(--accent2);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .screenshot {
+            margin: 32px 0;
+            text-align: center;
+        }
+
+        .screenshot img {
+            max-width: 100%;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .screenshot figcaption {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        h2 {
+            font-size: 1.6em;
+            color: var(--accent);
+            margin: 40px 0 16px 0;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        h3 {
+            font-size: 1.15em;
+            color: var(--blue);
+            margin: 24px 0 8px 0;
+        }
+
+        p, li {
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+
+        ul, ol {
+            padding-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        li { margin-bottom: 6px; }
+
+        code {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 2px 6px;
+            font-size: 0.9em;
+            color: #f0883e;
+        }
+
+        pre {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 12px 0 20px 0;
+            font-size: 0.88em;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--text);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0;
+            font-size: 0.92em;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 10px 14px;
+            text-align: left;
+        }
+
+        th {
+            background: var(--surface);
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) { background: rgba(22, 27, 34, 0.5); }
+
+        .badge-demo {
+            display: inline-flex;
+            gap: 6px;
+            margin: 4px 0;
+        }
+
+        .badge-demo span {
+            font-size: 0.75em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .b-amp-on { background: var(--green); color: #000; }
+        .b-amp-off { background: #333; color: #666; }
+        .b-cab-on { background: var(--blue); color: #000; }
+        .b-cab-off { background: #333; color: #666; }
+
+        .arch-diagram {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 24px;
+            margin: 16px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.8;
+            text-align: center;
+            color: var(--muted);
+        }
+
+        .arch-diagram .highlight { color: var(--accent); font-weight: bold; }
+        .arch-diagram .blue { color: var(--blue); }
+        .arch-diagram .green { color: var(--green); }
+
+        .warning {
+            background: #2a1a1a;
+            border: 1px solid #e94560;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 0.92em;
+        }
+
+        .warning strong { color: var(--accent); }
+
+        .info {
+            background: #0a1628;
+            border: 1px solid #1f6feb;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            font-size: 0.92em;
+        }
+
+        .info strong { color: var(--blue); }
+
+        footer {
+            text-align: center;
+            padding: 32px 24px;
+            border-top: 1px solid var(--border);
+            color: var(--muted);
+            font-size: 0.85em;
+        }
+
+        footer a { color: var(--accent); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+
+        @media (max-width: 700px) {
+            .hero h1 { font-size: 1.6em; }
+            .container { padding: 20px 16px; }
+            pre { font-size: 0.78em; }
+            .lang-toggle { position: static; margin-top: 12px; display: inline-block; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <button id="langToggle" class="lang-toggle">EN</button>
+    <h1>TONEX Pedal Controller</h1>
+    <p id="hero-desc">Contrôleur web pour l'IK Multimedia TONEX Pedal — Grille 3×3, synchronisation USB, bibliothèque de presets.</p>
+    <span class="version">v1.1 — 2026</span>
+</div>
+
+<div class="container">
+
+    <figure class="screenshot">
+        <img src="../captures/tnx1.png" alt="TONEX Pedal Controller interface">
+        <figcaption id="cap-fig">Interface complète — bibliothèque à gauche, grille 3×3 à droite</figcaption>
+    </figure>
+
+    <h2 id="h-features">Fonctionnalités</h2>
+    <ul id="features-list">
+        <li><strong data-t="feat-grid">Grille 3×3</strong> <span data-t="feat-grid-desc">de presets assignables avec noms et badges AMP/CAB</span></li>
+        <li><strong data-t="feat-lib">Bibliothèque complète</strong> <span data-t="feat-lib-desc">des 150 presets (50 banks × 3 slots A/B/C)</span></li>
+        <li><strong data-t="feat-sync">Synchronisation USB</strong> — <span data-t="feat-sync-desc">lecture de tous les noms et flags AMP/CAB via USB CDC série</span></li>
+        <li><strong data-t="feat-midi">Contrôle MIDI</strong> — <span data-t="feat-midi-desc">Bank Select + Program Change pour changer de preset</span></li>
+        <li><strong data-t="feat-drag">Glisser-déposer</strong> — <span data-t="feat-drag-desc">assigner, swap, supprimer via corbeille</span></li>
+        <li><strong data-t="feat-edit">Édition</strong> — <span data-t="feat-edit-desc">double-clic pour renommer et toggler AMP/CAB</span></li>
+        <li><strong data-t="feat-search">Recherche</strong> <span data-t="feat-search-desc">filtrante dans la bibliothèque</span></li>
+        <li><strong data-t="feat-persist">Persistance</strong> — <span data-t="feat-persist-desc">configuration sauvegardée en localStorage</span></li>
+    </ul>
+
+    <h2 id="h-prereq">Prérequis</h2>
+    <table>
+        <tr><th data-t="th-component">Composant</th><th data-t="th-version">Version requise</th></tr>
+        <tr><td data-t="prereq-browser">Navigateur</td><td data-t="prereq-browser-val">Chrome 89+ ou Edge 89+ (Web MIDI + Web Serial)</td></tr>
+        <tr><td data-t="prereq-os">Système</td><td>Windows 10/11</td></tr>
+        <tr><td data-t="prereq-pedal">Pédalier</td><td>IK Multimedia TONEX Pedal (full size)</td></tr>
+        <tr><td data-t="prereq-cable">Câble</td><td data-t="prereq-cable-val">USB-C connecté au port USB du pédalier</td></tr>
+    </table>
+
+    <div class="warning">
+        <strong data-t="warn-title">Important :</strong> <span data-t="warn-text">L'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas.</span>
+    </div>
+
+    <h2 id="h-install">Installation</h2>
+
+    <h3 data-t="install-opt1">Option 1 — Serveur web local (recommandé)</h3>
+    <p data-t="install-opt1-desc">Copier le dossier <code>tonexpedal/</code> dans le répertoire racine de votre serveur web :</p>
+    <pre><code>https://mon-serveur/tonexpedal/</code></pre>
+
+    <h3>Option 2 — localhost</h3>
+    <pre><code># Depuis le dossier tonexpedal/
+npx serve -s . -l 3000
+# ou
+python -m http.server 3000</code></pre>
+    <p data-t="install-opt2-puis">Puis ouvrir <code>http://localhost:3000</code>.</p>
+
+    <h2 id="h-usage">Utilisation</h2>
+
+    <h3 data-t="usage-midi-title">Connexion MIDI</h3>
+    <ol>
+        <li data-t="usage-midi-1">Brancher le TONEX Pedal en USB</li>
+        <li data-t="usage-midi-2">Ouvrir l'application dans Chrome/Edge</li>
+        <li data-t="usage-midi-3">Sélectionner le device MIDI dans le menu <strong>Device</strong></li>
+        <li data-t="usage-midi-4">Choisir le canal MIDI (défaut : Ch 1)</li>
+        <li data-t="usage-midi-5">Le statut passe à <strong style="color:#4caf50">Connecté</strong></li>
+    </ol>
+
+    <h3 data-t="usage-sync-title">Synchronisation USB</h3>
+    <ol>
+        <li data-t="usage-sync-1">Cliquer sur <strong>Sync USB</strong></li>
+        <li data-t="usage-sync-2">Sélectionner le port série TONEX Pedal</li>
+        <li data-t="usage-sync-3">La progression s'affiche : Hello → State → 150 presets</li>
+        <li data-t="usage-sync-4">Les noms et badges AMP/CAB se remplissent automatiquement</li>
+    </ol>
+
+    <div class="info">
+        <strong>Info :</strong> <span data-t="usage-sync-info">Le sync lit les noms, l'état AMP (active/désactivé) et le type de CAB (VIR, Tone Model, ou désactivé) pour chaque preset.</span>
+    </div>
+
+    <h3 data-t="usage-interact-title">Interactions</h3>
+    <table>
+        <tr><th data-t="th-action">Action</th><th data-t="th-result">Résultat</th></tr>
+        <tr><td data-t="act-click-btn">Clic simple sur un bouton</td><td data-t="act-click-btn-desc">Envoie Bank Select + Program Change au pédalier</td></tr>
+        <tr><td data-t="act-click-lib">Clic simple sur un preset de la bibliothèque</td><td data-t="act-click-lib-desc">Envoie le MIDI pour écouter le preset</td></tr>
+        <tr><td data-t="act-drag-lib">Glisser un preset de la bibliothèque → grille</td><td data-t="act-drag-lib-desc">Assigne le preset au bouton</td></tr>
+        <tr><td data-t="act-drag-swap">Glisser un bouton → un autre bouton</td><td data-t="act-drag-swap-desc">Swap les positions</td></tr>
+        <tr><td data-t="act-drag-trash">Glisser un bouton → corbeille</td><td data-t="act-drag-trash-desc">Vide le bouton</td></tr>
+        <tr><td data-t="act-dblclick">Double-clic sur un bouton ou preset</td><td data-t="act-dblclick-desc">Ouvre le modal d'édition (nom, AMP, CAB)</td></tr>
+        <tr><td data-t="act-search">Taper dans la barre de recherche</td><td data-t="act-search-desc">Filtre la bibliothèque par nom ou numéro</td></tr>
+    </table>
+
+    <h3 data-t="badges-title">Badges AMP/CAB</h3>
+    <p data-t="badges-desc">Chaque preset affiche deux badges indiquant son état :</p>
+    <div class="badge-demo">
+        <span class="b-amp-on">AMP</span> <span data-t="badges-amp-on">= Amplificateur actif</span>
+    </div>
+    <div class="badge-demo">
+        <span class="b-amp-off">AMP</span> <span data-t="badges-amp-off">= Amplificateur désactivé</span>
+    </div>
+    <div class="badge-demo">
+        <span class="b-cab-on">CAB</span> <span data-t="badges-cab-on">= Cabinet actif (VIR ou Tone Model)</span>
+    </div>
+    <div class="badge-demo">
+        <span class="b-cab-off">CAB</span> <span data-t="badges-cab-off">= Cabinet désactivé</span>
+    </div>
+
+    <h2 id="h-arch">Architecture technique</h2>
+
+    <div class="arch-diagram">
+<pre>
+┌─────────────────────────────────────────────────────────────────┐
+│                      <span class="highlight">TONEX Pedal Controller</span>                      │
+│                       <span class="highlight">index.html</span> (single-file)                  │
+│                                                                 │
+│  ┌──────────────┐    ┌──────────────────────┐    ┌───────────┐ │
+│  │   <span class="blue">Bibliothèque</span>  │    │     <span class="green">Grille 3×3</span>        │  │  <span class="highlight">Header</span>     │ │
+│  │  150 presets  │◄──►│  9 boutons assignés  │    │  MIDI     │ │
+│  │  + recherche  │    │  + drag & drop       │    │  Sync USB │ │
+│  └──────────────┘    └──────────────────────┘    └───────────┘ │
+│         │                      │                       │        │
+│         └──────────────────────┴───────────────────────┘        │
+│                              │                                  │
+│                    ┌─────────┴─────────┐                        │
+│                    │  <span class="blue">localStorage</span>      │                        │
+│                    │  state persistence │                        │
+│                    └─────────┬─────────┘                        │
+│                              │                                  │
+└──────────────────────────────┼──────────────────────────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              │                │                │
+     ┌────────┴────────┐ ┌────┴────┐ ┌─────────┴────────┐
+     │  <span class="highlight">Web MIDI API</span>   │ │ <span class="highlight">Web Serial</span>│ │   <span class="highlight">TONEX Pedal</span>     │
+     │  Bank Select    │ │  USB CDC │ │  50 banks × 3    │
+     │  Program Change │ │  HDLC    │ │  = 150 presets   │
+     └─────────────────┘ └─────────┘ └──────────────────┘
+</pre>
+    </div>
+
+    <h2 data-t="h-midi-proto">Protocole MIDI</h2>
+
+    <h3 data-t="midi-mapping-title">Mapping presets</h3>
+    <p data-t="midi-mapping-desc">Le TONEX Pedal utilise 50 banks × 3 slots (A/B/C) = 150 presets.</p>
+    <table>
+        <tr><th>Presets</th><th>Bank Select (CC#0)</th><th>Program Change</th></tr>
+        <tr><td>0 – 127</td><td><code>CC#0 = 0</code></td><td><code>PC = preset#</code></td></tr>
+        <tr><td>128 – 149</td><td><code>CC#0 = 1</code></td><td><code>PC = preset# − 128</code></td></tr>
+    </table>
+
+    <h3 data-t="midi-msg-title">Messages envoyés</h3>
+    <pre><code>Bank Select :  [0xB0 + channel, 0x00, value]   // value = 0 ou 1
+Program Change: [0xC0 + channel, PC]             // PC = 0–127</code></pre>
+
+    <h3 data-t="midi-calc-title">Calcul Bank/Slot → PC</h3>
+    <pre><code>pc = bank × 3 + slotIndex    // slotIndex: A=0, B=1, C=2
+bank = Math.floor(pc / 3)
+slot = ['A', 'B', 'C'][pc % 3]</code></pre>
+
+    <h2 data-t="h-serial-proto">Protocole USB CDC Série</h2>
+
+    <h3 data-t="serial-interfaces-title">Interfaces USB du pédalier</h3>
+    <table>
+        <tr><th data-t="th-interface">Interface</th><th data-t="th-usage">Usage</th></tr>
+        <tr><td>USB-MIDI</td><td data-t="serial-usb-midi">Bank Select / Program Change (via Web MIDI API)</td></tr>
+        <tr><td>USB CDC</td><td data-t="serial-usb-cdc">Communication série : lecture presets, paramètres (via Web Serial API)</td></tr>
+    </table>
+
+    <div class="info">
+        <strong>Device ID :</strong> <span data-t="serial-device-id">Le TONEX Pedal (full size) utilise l'identifiant <code>0x10</code>. Le TONEX One utilise <code>0x0B</code> (non supporté).</span>
+    </div>
+
+    <h3 data-t="serial-hdlc-title">Trame HDLC</h3>
+    <pre><code>[0x7E] [payload stuffed] [CRC_lo stuffed] [CRC_hi stuffed] [0x7E]</code></pre>
+    <ul>
+        <li><strong data-t="hdlc-delim">Délimiteur</strong> : <code>0x7E</code></li>
+        <li><strong>Byte stuffing</strong> : <code>0x7E</code> → <code>0x7D 0x5E</code>, <code>0x7D</code> → <code>0x7D 0x5D</code></li>
+        <li><strong>CRC-CCITT</strong> : <span data-t="hdlc-crc">polynomial <code>0x8408</code>, init <code>0xFFFF</code>, résultat inversé</span></li>
+    </ul>
+
+    <h3 data-t="serial-cmd-title">Commandes</h3>
+    <table>
+        <tr><th data-t="th-command">Commande</th><th>Payload</th><th data-t="th-description">Description</th></tr>
+        <tr>
+            <td>Hello</td>
+            <td><code>b9 03 00 82 04 00 80 10 01 b9 02 02 10</code></td>
+            <td data-t="cmd-hello-desc">Initialisation connexion</td>
+        </tr>
+        <tr>
+            <td>Request State</td>
+            <td><code>b9 03 00 82 06 00 80 10 03 b9 02 81 01 02 10</code></td>
+            <td data-t="cmd-state-desc">Demande l'état courant</td>
+        </tr>
+        <tr>
+            <td>Request Preset (0–127)</td>
+            <td><code>b9 03 81 00 02 82 06 00 80 10 03 b9 04 10 01 [index] 00</code></td>
+            <td>17 <span data-t="cmd-bytes">octets</span></td>
+        </tr>
+        <tr>
+            <td>Request Preset (128+)</td>
+            <td><code>b9 03 81 00 02 82 06 00 80 10 03 b9 04 10 01 80 [index] 00</code></td>
+            <td>18 <span data-t="cmd-bytes2">octets (escape <code>0x80</code>)</span></td>
+        </tr>
+    </table>
+
+    <h3 data-t="serial-resp-title">Réponse preset — Structure</h3>
+    <pre><code>[header] [B9 04 B9 02 BC 21] [nom 33 octets] [paramètres...]
+                                           ↑ NAME_MARKER</code></pre>
+
+    <h3 data-t="serial-params-title">Section paramètres</h3>
+    <p data-t="serial-params-desc">La section commence par le marker <code>BA 03 BA 6D</code> (<code>PARAM_MARKER</code>), suivie de floats encodés : <code>0x88</code> + 4 octets (little-endian).</p>
+    <table>
+        <tr><th>Index</th><th>Offset (×5)</th><th data-t="th-parameter">Paramètre</th><th data-t="th-values">Valeurs</th></tr>
+        <tr><td>17</td><td>85</td><td><strong>AMP Enable</strong></td><td>0.0 = off, &gt;0.5 = on</td></tr>
+        <tr><td>22</td><td>110</td><td><strong>CAB Type</strong></td><td>0.0 = off, 1.0 = VIR, 2.0 = Tone Model</td></tr>
+    </table>
+
+    <h3 data-t="serial-seq-title">Séquence de synchronisation</h3>
+    <pre><code>1. <span data-t="seq-1">Ouvrir port série (115200 bauds)</span>
+2. <span data-t="seq-2">Attendre 500ms</span>
+3. <span data-t="seq-3">Envoyer Hello         → lire réponse</span>
+4. <span data-t="seq-4">Attendre 200ms</span>
+5. <span data-t="seq-5">Envoyer Request State → lire réponse</span>
+6. <span data-t="seq-6">Attendre 200ms</span>
+7. <span data-t="seq-7">Pour chaque preset (0 à 149):</span>
+   a. <span data-t="seq-7a">Envoyer Request Preset</span>
+   b. <span data-t="seq-7b">Lire réponse</span>
+   c. <span data-t="seq-7c">Extraire nom (après NAME_MARKER)</span>
+   d. <span data-t="seq-7d">Extraire AMP/CAB (après PARAM_MARKER)</span>
+8. <span data-t="seq-8">Sauvegarder en localStorage</span></code></pre>
+
+    <h2 data-t="h-persist">Persistance</h2>
+    <p data-t="persist-desc">Tout est sauvegardé en <code>localStorage</code> sous la clé <code>tonex-state</code> :</p>
+    <pre><code>{
+  "buttons": {
+    "0": { "bank": 0, "slot": "A" },
+    "4": { "bank": 1, "slot": "B" }
+  },
+  "midi": { "device": "ToneX MIDI Out", "channel": 0 },
+  "presets": {
+    "0_A": { "name": "Trooper - 80s Pack", "amp": true, "cab": false },
+    "0_B": { "name": "80s Lead - 80s Pack", "amp": true, "cab": true }
+  }
+}</code></pre>
+
+    <h2 data-t="h-troubleshoot">Dépannage</h2>
+    <table>
+        <tr><th data-t="th-problem">Problème</th><th data-t="th-solution">Solution</th></tr>
+        <tr><td data-t="ts-no-midi">Aucun device MIDI</td><td data-t="ts-no-midi-sol">Vérifier le branchement USB. <code>chrome://midi-devices</code></td></tr>
+        <tr><td data-t="ts-no-serial">Web Serial indisponible</td><td data-t="ts-no-serial-sol">Chrome 89+ ou Edge 89+. Vérifier HTTPS/localhost</td></tr>
+        <tr><td data-t="ts-sync-fail">Sync USB échoue</td><td data-t="ts-sync-fail-sol">Fermer IK Tonex et tout logiciel utilisant le port série</td></tr>
+        <tr><td data-t="ts-no-names">Noms ne s'affichent pas</td><td data-t="ts-no-names-sol">Relancer Sync USB. Console F12 pour erreurs</td></tr>
+        <tr><td data-t="ts-grey-badges">AMP/CAB toujours gris</td><td data-t="ts-grey-badges-sol">Console F12 : vérifier les float32 lus (log des 3 premiers presets)</td></tr>
+        <tr><td data-t="ts-empty">Page vide après chargement</td><td data-t="ts-empty-sol">Recharger. Vider localStorage si corrompu</td></tr>
+    </table>
+
+    <h2 data-t="h-credits">Crédits</h2>
+    <ul>
+        <li data-t="credit-builty">Protocole USB CDC : reverse-engineered depuis <a href="https://github.com/Builty/usb_tonex_one" style="color:var(--accent)">Builty/usb_tonex_one</a></li>
+        <li data-t="credit-vit3k">Documentation protocole : <a href="https://github.com/vit3k/tonex-one-js" style="color:var(--accent)">vit3k/tonex-one-js</a></li>
+    </ul>
+
+</div>
+
+<footer>
+    <p>TONEX Pedal Controller v1.1 — 2026</p>
+    <p><a href="../index.html" data-t="footer-back">← Retour au contrôleur</a></p>
+</footer>
+
+<script>
+(function() {
+    const DOCS = {
+        fr: {
+            'hero-desc': 'Contrôleur web pour l\'IK Multimedia TONEX Pedal — Grille 3×3, synchronisation USB, bibliothèque de presets.',
+            'cap-fig': 'Interface complète — bibliothèque à gauche, grille 3×3 à droite',
+            'h-features': 'Fonctionnalités',
+            'feat-grid': 'Grille 3×3', 'feat-grid-desc': 'de presets assignables avec noms et badges AMP/CAB',
+            'feat-lib': 'Bibliothèque complète', 'feat-lib-desc': 'des 150 presets (50 banks × 3 slots A/B/C)',
+            'feat-sync': 'Synchronisation USB', 'feat-sync-desc': 'lecture de tous les noms et flags AMP/CAB via USB CDC série',
+            'feat-midi': 'Contrôle MIDI', 'feat-midi-desc': 'Bank Select + Program Change pour changer de preset',
+            'feat-drag': 'Glisser-déposer', 'feat-drag-desc': 'assigner, swap, supprimer via corbeille',
+            'feat-edit': 'Édition', 'feat-edit-desc': 'double-clic pour renommer et toggler AMP/CAB',
+            'feat-search': 'Recherche', 'feat-search-desc': 'filtrante dans la bibliothèque',
+            'feat-persist': 'Persistance', 'feat-persist-desc': 'configuration sauvegardée en localStorage',
+            'h-prereq': 'Prérequis',
+            'th-component': 'Composant', 'th-version': 'Version requise',
+            'prereq-browser': 'Navigateur', 'prereq-browser-val': 'Chrome 89+ ou Edge 89+ (Web MIDI + Web Serial)',
+            'prereq-os': 'Système', 'prereq-pedal': 'Pédalier', 'prereq-cable': 'Câble',
+            'prereq-cable-val': 'USB-C connecté au port USB du pédalier',
+            'warn-title': 'Important :', 'warn-text': 'L\'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas.',
+            'h-install': 'Installation',
+            'install-opt1': 'Option 1 — Serveur web local (recommandé)',
+            'install-opt1-desc': 'Copier le dossier <code>tonexpedal/</code> dans le répertoire racine de votre serveur web :',
+            'install-opt2-puis': 'Puis ouvrir <code>http://localhost:3000</code>.',
+            'h-usage': 'Utilisation',
+            'usage-midi-title': 'Connexion MIDI',
+            'usage-midi-1': 'Brancher le TONEX Pedal en USB',
+            'usage-midi-2': 'Ouvrir l\'application dans Chrome/Edge',
+            'usage-midi-3': 'Sélectionner le device MIDI dans le menu <strong>Device</strong>',
+            'usage-midi-4': 'Choisir le canal MIDI (défaut : Ch 1)',
+            'usage-midi-5': 'Le statut passe à <strong style="color:#4caf50">Connecté</strong>',
+            'usage-sync-title': 'Synchronisation USB',
+            'usage-sync-1': 'Cliquer sur <strong>Sync USB</strong>',
+            'usage-sync-2': 'Sélectionner le port série TONEX Pedal',
+            'usage-sync-3': 'La progression s\'affiche : Hello → State → 150 presets',
+            'usage-sync-4': 'Les noms et badges AMP/CAB se remplissent automatiquement',
+            'usage-sync-info': 'Le sync lit les noms, l\'état AMP (active/désactivé) et le type de CAB (VIR, Tone Model, ou désactivé) pour chaque preset.',
+            'usage-interact-title': 'Interactions',
+            'th-action': 'Action', 'th-result': 'Résultat',
+            'act-click-btn': 'Clic simple sur un bouton', 'act-click-btn-desc': 'Envoie Bank Select + Program Change au pédalier',
+            'act-click-lib': 'Clic simple sur un preset de la bibliothèque', 'act-click-lib-desc': 'Envoie le MIDI pour écouter le preset',
+            'act-drag-lib': 'Glisser un preset de la bibliothèque → grille', 'act-drag-lib-desc': 'Assigne le preset au bouton',
+            'act-drag-swap': 'Glisser un bouton → un autre bouton', 'act-drag-swap-desc': 'Swap les positions',
+            'act-drag-trash': 'Glisser un bouton → corbeille', 'act-drag-trash-desc': 'Vide le bouton',
+            'act-dblclick': 'Double-clic sur un bouton ou preset', 'act-dblclick-desc': 'Ouvre le modal d\'édition (nom, AMP, CAB)',
+            'act-search': 'Taper dans la barre de recherche', 'act-search-desc': 'Filtre la bibliothèque par nom ou numéro',
+            'badges-title': 'Badges AMP/CAB',
+            'badges-desc': 'Chaque preset affiche deux badges indiquant son état :',
+            'badges-amp-on': '= Amplificateur actif', 'badges-amp-off': '= Amplificateur désactivé',
+            'badges-cab-on': '= Cabinet actif (VIR ou Tone Model)', 'badges-cab-off': '= Cabinet désactivé',
+            'h-arch': 'Architecture technique',
+            'h-midi-proto': 'Protocole MIDI',
+            'midi-mapping-title': 'Mapping presets', 'midi-mapping-desc': 'Le TONEX Pedal utilise 50 banks × 3 slots (A/B/C) = 150 presets.',
+            'midi-msg-title': 'Messages envoyés',
+            'midi-calc-title': 'Calcul Bank/Slot → PC',
+            'h-serial-proto': 'Protocole USB CDC Série',
+            'serial-interfaces-title': 'Interfaces USB du pédalier',
+            'th-interface': 'Interface', 'th-usage': 'Usage',
+            'serial-usb-midi': 'Bank Select / Program Change (via Web MIDI API)',
+            'serial-usb-cdc': 'Communication série : lecture presets, paramètres (via Web Serial API)',
+            'serial-device-id': 'Le TONEX Pedal (full size) utilise l\'identifiant <code>0x10</code>. Le TONEX One utilise <code>0x0B</code> (non supporté).',
+            'serial-hdlc-title': 'Trame HDLC',
+            'hdlc-delim': 'Délimiteur', 'hdlc-crc': 'polynomial <code>0x8408</code>, init <code>0xFFFF</code>, résultat inversé',
+            'serial-cmd-title': 'Commandes',
+            'th-command': 'Commande', 'th-description': 'Description',
+            'cmd-hello-desc': 'Initialisation connexion', 'cmd-state-desc': 'Demande l\'état courant',
+            'cmd-bytes': 'octets', 'cmd-bytes2': 'octets (escape <code>0x80</code>)',
+            'serial-resp-title': 'Réponse preset — Structure',
+            'serial-params-title': 'Section paramètres',
+            'serial-params-desc': 'La section commence par le marker <code>BA 03 BA 6D</code> (<code>PARAM_MARKER</code>), suivie de floats encodés : <code>0x88</code> + 4 octets (little-endian).',
+            'th-parameter': 'Paramètre', 'th-values': 'Valeurs',
+            'serial-seq-title': 'Séquence de synchronisation',
+            'seq-1': 'Ouvrir port série (115200 bauds)',
+            'seq-2': 'Attendre 500ms',
+            'seq-3': 'Envoyer Hello         → lire réponse',
+            'seq-4': 'Attendre 200ms',
+            'seq-5': 'Envoyer Request State → lire réponse',
+            'seq-6': 'Attendre 200ms',
+            'seq-7': 'Pour chaque preset (0 à 149):',
+            'seq-7a': 'Envoyer Request Preset',
+            'seq-7b': 'Lire réponse',
+            'seq-7c': 'Extraire nom (après NAME_MARKER)',
+            'seq-7d': 'Extraire AMP/CAB (après PARAM_MARKER)',
+            'seq-8': 'Sauvegarder en localStorage',
+            'h-persist': 'Persistance',
+            'persist-desc': 'Tout est sauvegardé en <code>localStorage</code> sous la clé <code>tonex-state</code> :',
+            'h-troubleshoot': 'Dépannage',
+            'th-problem': 'Problème', 'th-solution': 'Solution',
+            'ts-no-midi': 'Aucun device MIDI', 'ts-no-midi-sol': 'Vérifier le branchement USB. <code>chrome://midi-devices</code>',
+            'ts-no-serial': 'Web Serial indisponible', 'ts-no-serial-sol': 'Chrome 89+ ou Edge 89+. Vérifier HTTPS/localhost',
+            'ts-sync-fail': 'Sync USB échoue', 'ts-sync-fail-sol': 'Fermer IK Tonex et tout logiciel utilisant le port série',
+            'ts-no-names': 'Noms ne s\'affichent pas', 'ts-no-names-sol': 'Relancer Sync USB. Console F12 pour erreurs',
+            'ts-grey-badges': 'AMP/CAB toujours gris', 'ts-grey-badges-sol': 'Console F12 : vérifier les float32 lus (log des 3 premiers presets)',
+            'ts-empty': 'Page vide après chargement', 'ts-empty-sol': 'Recharger. Vider localStorage si corrompu',
+            'h-credits': 'Crédits',
+            'credit-builty': 'Protocole USB CDC : reverse-engineered depuis <a href="https://github.com/Builty/usb_tonex_one" style="color:var(--accent)">Builty/usb_tonex_one</a>',
+            'credit-vit3k': 'Documentation protocole : <a href="https://github.com/vit3k/tonex-one-js" style="color:var(--accent)">vit3k/tonex-one-js</a>',
+            'footer-back': '← Retour au contrôleur',
+            'langToggle': 'EN', 'htmlLang': 'fr'
+        },
+        en: {
+            'hero-desc': 'Web controller for IK Multimedia TONEX Pedal — 3×3 grid, USB sync, preset library.',
+            'cap-fig': 'Full interface — library on the left, 3×3 grid on the right',
+            'h-features': 'Features',
+            'feat-grid': '3×3 Grid', 'feat-grid-desc': 'of assignable presets with names and AMP/CAB badges',
+            'feat-lib': 'Full library', 'feat-lib-desc': 'of 150 presets (50 banks × 3 slots A/B/C)',
+            'feat-sync': 'USB Sync', 'feat-sync-desc': 'reads all names and AMP/CAB flags via USB CDC serial',
+            'feat-midi': 'MIDI Control', 'feat-midi-desc': 'Bank Select + Program Change to change presets',
+            'feat-drag': 'Drag & drop', 'feat-drag-desc': 'assign, swap, delete via trash',
+            'feat-edit': 'Editing', 'feat-edit-desc': 'double-click to rename and toggle AMP/CAB',
+            'feat-search': 'Search', 'feat-search-desc': 'filtering in the library',
+            'feat-persist': 'Persistence', 'feat-persist-desc': 'configuration saved in localStorage',
+            'h-prereq': 'Prerequisites',
+            'th-component': 'Component', 'th-version': 'Required version',
+            'prereq-browser': 'Browser', 'prereq-browser-val': 'Chrome 89+ or Edge 89+ (Web MIDI + Web Serial)',
+            'prereq-os': 'OS', 'prereq-pedal': 'Pedal', 'prereq-cable': 'Cable',
+            'prereq-cable-val': 'USB-C connected to the pedal USB port',
+            'warn-title': 'Important:', 'warn-text': 'Web Serial API requires <strong>HTTPS</strong> or <strong>localhost</strong>. A simple <code>file://</code> will not work.',
+            'h-install': 'Installation',
+            'install-opt1': 'Option 1 — Local web server (recommended)',
+            'install-opt1-desc': 'Copy the <code>tonexpedal/</code> folder to your web server root:',
+            'install-opt2-puis': 'Then open <code>http://localhost:3000</code>.',
+            'h-usage': 'Usage',
+            'usage-midi-title': 'MIDI Connection',
+            'usage-midi-1': 'Connect the TONEX Pedal via USB',
+            'usage-midi-2': 'Open the app in Chrome/Edge',
+            'usage-midi-3': 'Select the MIDI device in the <strong>Device</strong> menu',
+            'usage-midi-4': 'Choose the MIDI channel (default: Ch 1)',
+            'usage-midi-5': 'Status changes to <strong style="color:#4caf50">Connected</strong>',
+            'usage-sync-title': 'USB Sync',
+            'usage-sync-1': 'Click <strong>Sync USB</strong>',
+            'usage-sync-2': 'Select the TONEX Pedal serial port',
+            'usage-sync-3': 'Progress shows: Hello → State → 150 presets',
+            'usage-sync-4': 'Names and AMP/CAB badges fill automatically',
+            'usage-sync-info': 'Sync reads names, AMP state (on/off), and CAB type (VIR, Tone Model, or off) for each preset.',
+            'usage-interact-title': 'Interactions',
+            'th-action': 'Action', 'th-result': 'Result',
+            'act-click-btn': 'Click a button', 'act-click-btn-desc': 'Sends Bank Select + Program Change to the pedal',
+            'act-click-lib': 'Click a library preset', 'act-click-lib-desc': 'Sends MIDI to audition the preset',
+            'act-drag-lib': 'Drag preset from library → grid', 'act-drag-lib-desc': 'Assigns the preset to the button',
+            'act-drag-swap': 'Drag a button → another button', 'act-drag-swap-desc': 'Swaps positions',
+            'act-drag-trash': 'Drag a button → trash', 'act-drag-trash-desc': 'Clears the button',
+            'act-dblclick': 'Double-click a button or preset', 'act-dblclick-desc': 'Opens edit modal (name, AMP, CAB)',
+            'act-search': 'Type in the search bar', 'act-search-desc': 'Filters the library by name or number',
+            'badges-title': 'AMP/CAB Badges',
+            'badges-desc': 'Each preset shows two badges indicating its state:',
+            'badges-amp-on': '= Amplifier active', 'badges-amp-off': '= Amplifier disabled',
+            'badges-cab-on': '= Cabinet active (VIR or Tone Model)', 'badges-cab-off': '= Cabinet disabled',
+            'h-arch': 'Technical Architecture',
+            'h-midi-proto': 'MIDI Protocol',
+            'midi-mapping-title': 'Preset mapping', 'midi-mapping-desc': 'The TONEX Pedal uses 50 banks × 3 slots (A/B/C) = 150 presets.',
+            'midi-msg-title': 'Messages sent',
+            'midi-calc-title': 'Bank/Slot → PC calculation',
+            'h-serial-proto': 'USB CDC Serial Protocol',
+            'serial-interfaces-title': 'Pedal USB interfaces',
+            'th-interface': 'Interface', 'th-usage': 'Usage',
+            'serial-usb-midi': 'Bank Select / Program Change (via Web MIDI API)',
+            'serial-usb-cdc': 'Serial communication: read presets, parameters (via Web Serial API)',
+            'serial-device-id': 'TONEX Pedal (full size) uses device ID <code>0x10</code>. TONEX One uses <code>0x0B</code> (not supported).',
+            'serial-hdlc-title': 'HDLC Frame',
+            'hdlc-delim': 'Delimiter', 'hdlc-crc': 'polynomial <code>0x8408</code>, init <code>0xFFFF</code>, inverted result',
+            'serial-cmd-title': 'Commands',
+            'th-command': 'Command', 'th-description': 'Description',
+            'cmd-hello-desc': 'Connection init', 'cmd-state-desc': 'Request current state',
+            'cmd-bytes': 'bytes', 'cmd-bytes2': 'bytes (escape <code>0x80</code>)',
+            'serial-resp-title': 'Preset Response — Structure',
+            'serial-params-title': 'Parameters Section',
+            'serial-params-desc': 'The section starts with marker <code>BA 03 BA 6D</code> (<code>PARAM_MARKER</code>), followed by encoded floats: <code>0x88</code> + 4 bytes (little-endian).',
+            'th-parameter': 'Parameter', 'th-values': 'Values',
+            'serial-seq-title': 'Sync Sequence',
+            'seq-1': 'Open serial port (115200 bauds)',
+            'seq-2': 'Wait 500ms',
+            'seq-3': 'Send Hello           → read response',
+            'seq-4': 'Wait 200ms',
+            'seq-5': 'Send Request State   → read response',
+            'seq-6': 'Wait 200ms',
+            'seq-7': 'For each preset (0 to 149):',
+            'seq-7a': 'Send Request Preset',
+            'seq-7b': 'Read response',
+            'seq-7c': 'Extract name (after NAME_MARKER)',
+            'seq-7d': 'Extract AMP/CAB (after PARAM_MARKER)',
+            'seq-8': 'Save to localStorage',
+            'h-persist': 'Persistence',
+            'persist-desc': 'Everything is saved in <code>localStorage</code> under the key <code>tonex-state</code>:',
+            'h-troubleshoot': 'Troubleshooting',
+            'th-problem': 'Problem', 'th-solution': 'Solution',
+            'ts-no-midi': 'No MIDI device', 'ts-no-midi-sol': 'Check USB connection. <code>chrome://midi-devices</code>',
+            'ts-no-serial': 'Web Serial unavailable', 'ts-no-serial-sol': 'Chrome 89+ or Edge 89+. Check HTTPS/localhost',
+            'ts-sync-fail': 'USB Sync fails', 'ts-sync-fail-sol': 'Close IK Tonex and any app using the serial port',
+            'ts-no-names': 'Names don\'t appear', 'ts-no-names-sol': 'Re-run Sync USB. Console F12 for errors',
+            'ts-grey-badges': 'AMP/CAB always grey', 'ts-grey-badges-sol': 'Console F12: check float32 values (log for first 3 presets)',
+            'ts-empty': 'Page empty after load', 'ts-empty-sol': 'Reload. Clear localStorage if corrupted',
+            'h-credits': 'Credits',
+            'credit-builty': 'USB CDC protocol: reverse-engineered from <a href="https://github.com/Builty/usb_tonex_one" style="color:var(--accent)">Builty/usb_tonex_one</a>',
+            'credit-vit3k': 'Protocol docs: <a href="https://github.com/vit3k/tonex-one-js" style="color:var(--accent)">vit3k/tonex-one-js</a>',
+            'footer-back': '← Back to controller',
+            'langToggle': 'FR', 'htmlLang': 'en'
+        }
+    };
+
+    function getLang() {
+        const saved = localStorage.getItem('tonex-lang');
+        if (saved && DOCS[saved]) return saved;
+        const bcp = navigator.language || navigator.userLanguage || '';
+        return bcp.startsWith('fr') ? 'fr' : 'en';
+    }
+
+    let lang = getLang();
+    localStorage.setItem('tonex-lang', lang);
+
+    function applyDocsLang() {
+        document.documentElement.lang = DOCS[lang]['htmlLang'] || lang;
+        document.getElementById('langToggle').textContent = DOCS[lang]['langToggle'] || 'EN';
+
+        for (const [key, val] of Object.entries(DOCS[lang])) {
+            if (key === 'langToggle' || key === 'htmlLang') continue;
+
+            const el = document.getElementById(key);
+            if (el) {
+                el.innerHTML = val;
+                continue;
+            }
+
+            document.querySelectorAll('[data-t="' + key + '"]').forEach(node => {
+                node.innerHTML = val;
+            });
+        }
+    }
+
+    document.getElementById('langToggle').addEventListener('click', () => {
+        lang = lang === 'fr' ? 'en' : 'fr';
+        localStorage.setItem('tonex-lang', lang);
+        applyDocsLang();
+    });
+
+    applyDocsLang();
+})();
+</script>
+
+</body>
+</html>

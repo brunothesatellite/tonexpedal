@@ -1,0 +1,1519 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+	<title>TONEX Pedal Controller</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #16213e;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 2px solid #0f3460;
+            flex-wrap: wrap;
+        }
+
+        header h1 {
+            font-size: 1.2em;
+            color: #e94560;
+            margin-right: 16px;
+        }
+
+        .midi-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .midi-controls label {
+            font-size: 0.85em;
+            color: #999;
+        }
+
+        .midi-controls select {
+            background: #0f3460;
+            color: #e0e0e0;
+            border: 1px solid #533483;
+            border-radius: 4px;
+            padding: 5px 8px;
+            font-size: 0.85em;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .midi-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85em;
+        }
+
+        .midi-status .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e94560;
+        }
+
+        .midi-status .dot.connected {
+            background: #4caf50;
+        }
+
+        .icon-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #0f3460;
+            border: 1px solid #533483;
+            color: #e94560;
+            font-size: 1em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            transition: background 0.2s, border-color 0.2s;
+            flex-shrink: 0;
+            cursor: pointer;
+        }
+
+        .icon-btn:hover {
+            background: #533483;
+            border-color: #e94560;
+        }
+
+        .lang-btn {
+            font-size: 0.75em;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .main-layout {
+            display: flex;
+            height: calc(100vh - 52px);
+        }
+
+        .library-panel {
+            width: 400px;
+            min-width: 320px;
+            border-right: 2px solid #0f3460;
+            display: flex;
+            flex-direction: column;
+            background: #16213e;
+        }
+
+        .library-header {
+            padding: 12px;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .trash-zone {
+            background: #2a1a1a;
+            border: 2px dashed #e94560;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            color: #e94560;
+            transition: all 0.2s;
+        }
+
+        .trash-zone.drag-over {
+            background: #e94560;
+            color: #fff;
+            border-color: #fff;
+            transform: scale(1.02);
+        }
+
+        .trash-zone .trash-icon {
+            font-size: 1.4em;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .search-box {
+            width: 100%;
+            background: #0f3460;
+            border: 1px solid #533483;
+            border-radius: 4px;
+            padding: 8px 10px;
+            color: #e0e0e0;
+            font-size: 0.9em;
+        }
+
+        .search-box::placeholder {
+            color: #666;
+        }
+
+        .preset-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .preset-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .preset-list::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        .preset-list::-webkit-scrollbar-thumb {
+            background: #533483;
+            border-radius: 4px;
+        }
+
+        .bank-group {
+            margin-bottom: 8px;
+        }
+
+        .bank-label {
+            font-size: 0.75em;
+            color: #533483;
+            font-weight: bold;
+            padding: 4px 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .preset-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 6px;
+            cursor: grab;
+            transition: background 0.15s;
+            border: 1px solid transparent;
+            user-select: none;
+        }
+
+        .preset-row:hover {
+            background: #1a1a3e;
+            border-color: #533483;
+        }
+
+        .preset-row.active {
+            background: #0f3460;
+            border-color: #e94560;
+        }
+
+        .preset-row:active {
+            cursor: grabbing;
+        }
+
+        .preset-row.dragging {
+            opacity: 0.4;
+        }
+
+        .preset-slot {
+            font-weight: bold;
+            font-size: 0.9em;
+            color: #e94560;
+            width: 20px;
+            text-align: center;
+        }
+
+        .preset-name {
+            flex: 1;
+            font-size: 0.85em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .preset-badges {
+            display: flex;
+            gap: 4px;
+        }
+
+        .badge {
+            font-size: 0.65em;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .badge.amp-on {
+            background: #4caf50;
+            color: #000;
+        }
+
+        .badge.amp-off {
+            background: #333;
+            color: #666;
+        }
+
+        .badge.cab-on {
+            background: #2196f3;
+            color: #000;
+        }
+
+        .badge.cab-off {
+            background: #333;
+            color: #666;
+        }
+
+        .grid-panel {
+            flex: 1;
+            display: flex;
+            align-items: stretch;
+            justify-content: stretch;
+            padding: 16px;
+        }
+
+        .preset-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 12px;
+            width: 100%;
+            height: 100%;
+        }
+
+        .grid-btn {
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+            position: relative;
+            padding: 12px;
+            min-height: 0;
+            container-type: inline-size;
+            overflow: hidden;
+        }
+
+        .grid-btn:hover {
+            border-color: #533483;
+        }
+
+        .grid-btn.active {
+            border-color: #e94560;
+            box-shadow: 0 0 16px rgba(233, 69, 96, 0.3);
+        }
+
+        .grid-btn.drag-over {
+            border-color: #4caf50;
+            background: #1a2e1a;
+        }
+
+        .grid-btn.empty {
+            border-style: dashed;
+            opacity: 0.5;
+        }
+
+        .grid-btn.empty:hover {
+            opacity: 0.8;
+        }
+
+        .grid-btn .btn-slot {
+            font-size: 4cqi;
+            color: #533483;
+            font-weight: bold;
+        }
+
+        .grid-btn .btn-preset {
+            font-size: 5.5cqi;
+            font-weight: bold;
+            color: #e94560;
+        }
+
+        .grid-btn .btn-name {
+            font-size: 5cqi;
+            color: #ccc;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+
+        .grid-btn .btn-badges {
+            display: flex;
+            gap: 4px;
+        }
+
+        .grid-btn .btn-badges .badge {
+            font-size: 3.5cqi;
+            padding: 1cqi 2cqi;
+        }
+
+        .grid-btn .empty-label {
+            font-size: 5cqi;
+            color: #555;
+        }
+
+        footer {
+            background: #16213e;
+            border-top: 1px solid #0f3460;
+            padding: 8px 24px;
+            font-size: 0.75em;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .edit-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .edit-modal {
+            background: #16213e;
+            border: 2px solid #533483;
+            border-radius: 12px;
+            padding: 24px;
+            width: 360px;
+        }
+
+        .edit-modal h3 {
+            margin-bottom: 16px;
+            color: #e94560;
+        }
+
+        .edit-modal label {
+            display: block;
+            font-size: 0.85em;
+            color: #999;
+            margin-bottom: 4px;
+            margin-top: 12px;
+        }
+
+        .edit-modal input[type="text"] {
+            width: 100%;
+            background: #0f3460;
+            border: 1px solid #533483;
+            border-radius: 4px;
+            padding: 8px;
+            color: #e0e0e0;
+            font-size: 0.9em;
+        }
+
+        .edit-modal .checkbox-row {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .edit-modal .checkbox-row label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #e0e0e0;
+            font-size: 0.9em;
+            margin: 0;
+        }
+
+        .edit-modal .btn-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .edit-modal button {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .btn-cancel {
+            background: #333;
+            color: #ccc;
+        }
+
+        .btn-save {
+            background: #e94560;
+            color: #fff;
+        }
+
+        .btn-delete {
+            background: #661111;
+            color: #e94560;
+        }
+
+        .sync-btn {
+            background: #0f3460;
+            color: #e0e0e0;
+            border: 1px solid #533483;
+            border-radius: 4px;
+            padding: 5px 12px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .sync-btn:hover {
+            background: #533483;
+        }
+
+        .sync-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .sync-progress {
+            display: none;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .sync-progress.active {
+            display: flex;
+        }
+
+        .sync-progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #0f3460;
+            border-radius: 3px;
+            overflow: hidden;
+            min-width: 100px;
+        }
+
+        .sync-progress-fill {
+            height: 100%;
+            background: #e94560;
+            border-radius: 3px;
+            transition: width 0.2s;
+            width: 0%;
+        }
+
+        .sync-progress-text {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>TONEX Pedal Controller</h1>
+        <div class="midi-controls">
+            <label data-i18n="device">Device :</label>
+            <select id="midi-device"><option value="" data-i18n="choose">-- Choisir --</option></select>
+            <label data-i18n="channel">Canal :</label>
+            <select id="midi-channel"></select>
+        </div>
+        <div class="header-right">
+            <button id="langToggle" class="icon-btn lang-btn" title="Switch language">EN</button>
+            <a href="docs/" target="_blank" class="icon-btn" title="Documentation">?</a>
+            <div class="midi-status">
+                <div class="dot" id="midi-dot"></div>
+                <span id="midi-status-text" data-i18n="disconnected">Non connecté</span>
+            </div>
+            <button id="syncUSB" class="sync-btn" title="Sync preset names via USB">🔌 Sync USB</button>
+            <div id="syncProgress" class="sync-progress">
+                <div class="sync-progress-bar"><div id="syncProgressFill" class="sync-progress-fill"></div></div>
+                <span id="syncProgressText" class="sync-progress-text"></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <div class="library-panel">
+            <div class="library-header">
+                <div class="trash-zone" id="trash-zone">
+                    <span class="trash-icon">🗑️</span>
+                    <span data-i18n="trashText">Glisser ici pour effacer le bouton</span>
+                </div>
+                <input type="text" class="search-box" id="search-box" data-i18n-placeholder="searchPlaceholder" placeholder="Rechercher un preset...">
+            </div>
+            <div class="preset-list" id="preset-list"></div>
+        </div>
+
+        <div class="grid-panel">
+            <div class="preset-grid" id="preset-grid"></div>
+        </div>
+    </div>
+
+    <footer>
+        <span data-i18n="footerHelp">🔊 AMP &nbsp; 🎛️ CAB &nbsp; | &nbsp; Clic preset = écouter &nbsp; | &nbsp; Drag = assigner / swap</span>
+        <span id="active-preset" data-i18n="activePreset">Preset actif: --</span>
+    </footer>
+
+    <div class="edit-overlay" id="edit-overlay" style="display:none">
+        <div class="edit-modal">
+            <h3 id="edit-title" data-i18n="editTitle">Éditer le preset</h3>
+            <label data-i18n="presetName">Nom du preset</label>
+            <input type="text" id="edit-name" maxlength="20" data-i18n-placeholder="presetName" placeholder="Nom du preset">
+            <div class="checkbox-row">
+                <label><input type="checkbox" id="edit-amp"> AMP</label>
+                <label><input type="checkbox" id="edit-cab"> CAB</label>
+            </div>
+            <div class="btn-row">
+                <button class="btn-cancel" id="edit-cancel" data-i18n="cancel">Annuler</button>
+                <button class="btn-delete" id="edit-delete" style="display:none" data-i18n="delete">Effacer</button>
+                <button class="btn-save" id="edit-save" data-i18n="save">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        // --- Translations ---
+        const LANG_DATA = {
+            fr: {
+                device: 'Device :',
+                channel: 'Canal :',
+                choose: '-- Choisir --',
+                disconnected: 'Non connecté',
+                connected: 'Connecté',
+                noDevice: '-- Aucun device --',
+                webMidiNotSupported: 'Web MIDI non supporté',
+                trashText: 'Glisser ici pour effacer le bouton',
+                searchPlaceholder: 'Rechercher un preset...',
+                empty: 'Vide',
+                footerHelp: '🔊 AMP &nbsp; 🎛️ CAB &nbsp; | &nbsp; Clic preset = \u00e9couter &nbsp; | &nbsp; Drag = assigner / swap',
+                activePreset: 'Preset actif: ',
+                editTitle: '\u00c9diter le preset',
+                editButton: '\u00c9diter le bouton ',
+                editPreset: '\u00c9diter ',
+                presetName: 'Nom du preset',
+                cancel: 'Annuler',
+                delete: 'Effacer',
+                save: 'Valider',
+                bankLabel: 'Bank ',
+                syncTitle: 'Synchroniser les noms de presets via USB',
+                cancelSync: 'Annuler',
+                portOpening: 'Ouverture port...',
+                syncDone: 'Termin\u00e9! ',
+                syncPresetsRead: ' presets lus',
+                syncError: 'Erreur: ',
+                portError: 'Impossible d\'ouvrir le port s\u00e9rie: ',
+                langToggle: 'EN',
+                htmlLang: 'fr'
+            },
+            en: {
+                device: 'Device:',
+                channel: 'Channel:',
+                choose: '-- Select --',
+                disconnected: 'Disconnected',
+                connected: 'Connected',
+                noDevice: '-- No device --',
+                webMidiNotSupported: 'Web MIDI not supported',
+                trashText: 'Drag here to clear button',
+                searchPlaceholder: 'Search a preset...',
+                empty: 'Empty',
+                footerHelp: '🔊 AMP &nbsp; 🎛️ CAB &nbsp; | &nbsp; Click preset = listen &nbsp; | &nbsp; Drag = assign / swap',
+                activePreset: 'Active preset: ',
+                editTitle: 'Edit preset',
+                editButton: 'Edit button ',
+                editPreset: 'Edit ',
+                presetName: 'Preset name',
+                cancel: 'Cancel',
+                delete: 'Delete',
+                save: 'Save',
+                bankLabel: 'Bank ',
+                syncTitle: 'Sync preset names via USB',
+                cancelSync: 'Cancel',
+                portOpening: 'Opening port...',
+                syncDone: 'Done! ',
+                syncPresetsRead: ' presets read',
+                syncError: 'Error: ',
+                portError: 'Cannot open serial port: ',
+                langToggle: 'FR',
+                htmlLang: 'en'
+            }
+        };
+
+        function getLang() {
+            const saved = localStorage.getItem('tonex-lang');
+            if (saved && LANG_DATA[saved]) return saved;
+            const bcp = navigator.language || navigator.userLanguage || '';
+            return bcp.startsWith('fr') ? 'fr' : 'en';
+        }
+
+        let currentLang = getLang();
+        localStorage.setItem('tonex-lang', currentLang);
+
+        function t(key) { return LANG_DATA[currentLang][key] || key; }
+
+        function applyLang() {
+            document.documentElement.lang = t('htmlLang');
+            document.getElementById('langToggle').textContent = t('langToggle');
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                el.innerHTML = t(key);
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                el.placeholder = t(key);
+            });
+
+            if (midiOutput) {
+                updateMIDIStatus(true);
+            } else {
+                document.getElementById('midi-status-text').textContent = t('disconnected');
+            }
+
+            document.getElementById('syncUSB').title = t('syncTitle');
+
+            if (document.getElementById('active-preset').dataset.base !== undefined) {
+                updateActivePresetDisplay();
+            }
+        }
+
+        document.getElementById('langToggle').addEventListener('click', () => {
+            currentLang = currentLang === 'fr' ? 'en' : 'fr';
+            localStorage.setItem('tonex-lang', currentLang);
+            applyLang();
+            renderLibrary();
+            renderGrid();
+        });
+
+        // --- Constants ---
+        const TOTAL_BANKS = 50;
+        const SLOTS = ['A', 'B', 'C'];
+        const TOTAL_PRESETS = TOTAL_BANKS * 3;
+
+        let midiOutput = null;
+        let midiChannel = 0;
+        let activePresetPC = -1;
+        let editingButtonSlot = null;
+        let justDragged = false;
+        let activePresetBank = -1;
+        let activePresetSlot = '';
+
+        // --- State ---
+        let state = loadState();
+
+        function defaultState() {
+            return {
+                buttons: {},
+                midi: { device: '', channel: 0 },
+                presets: {}
+            };
+        }
+
+        function loadState() {
+            try {
+                const s = JSON.parse(localStorage.getItem('tonex-state'));
+                if (s && s.buttons) return s;
+            } catch(e) {}
+            return defaultState();
+        }
+
+        function saveState() {
+            localStorage.setItem('tonex-state', JSON.stringify(state));
+        }
+
+        function getPresetKey(bank, slot) {
+            return bank + '_' + slot;
+        }
+
+        function getPresetInfo(bank, slot) {
+            const key = getPresetKey(bank, slot);
+            if (!state.presets[key]) {
+                state.presets[key] = {
+                    name: 'Preset ' + String(bank).padStart(2,'0') + slot,
+                    amp: false,
+                    cab: false
+                };
+            }
+            return state.presets[key];
+        }
+
+        function bankSlotFromPC(pc) {
+            if (pc < 127) {
+                return { bank: Math.floor(pc / 3), slot: SLOTS[pc % 3] };
+            } else {
+                return { bank: 42, slot: 'C' };
+            }
+        }
+
+        function pcFromBankSlot(bank, slot) {
+            const slotIndex = SLOTS.indexOf(slot);
+            return bank * 3 + slotIndex;
+        }
+
+        // --- MIDI ---
+        function updateActivePresetDisplay() {
+            const el = document.getElementById('active-preset');
+            el.dataset.base = 'activePreset';
+            if (activePresetPC >= 0) {
+                const info = getPresetInfo(activePresetBank, activePresetSlot);
+                el.textContent = t('activePreset') + String(activePresetBank).padStart(2,'0') + activePresetSlot + ' \u2014 ' + info.name;
+            } else {
+                el.textContent = t('activePreset') + '--';
+            }
+        }
+
+        function bankSelectAndPC(bank, slot) {
+            if (!midiOutput) return;
+            const pc = pcFromBankSlot(bank, slot);
+            const ch = midiChannel;
+
+            if (pc > 127) {
+                const midiCh = 0xB0 + ch;
+                midiOutput.send([midiCh, 0, 1]);
+                setTimeout(() => {
+                    midiOutput.send([0xC0 + ch, pc - 128]);
+                }, 30);
+            } else {
+                const midiCh = 0xB0 + ch;
+                midiOutput.send([midiCh, 0, 0]);
+                setTimeout(() => {
+                    midiOutput.send([0xC0 + ch, pc]);
+                }, 30);
+            }
+
+            activePresetPC = pc;
+            activePresetBank = bank;
+            activePresetSlot = slot;
+            updateActivePresetDisplay();
+            renderLibrary();
+        }
+
+        async function initMIDI() {
+            try {
+                const midiAccess = await navigator.requestMIDIAccess();
+                const select = document.getElementById('midi-device');
+                select.innerHTML = '';
+
+                const outputs = Array.from(midiAccess.outputs.values());
+                if (outputs.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.textContent = t('noDevice');
+                    select.appendChild(opt);
+                    return;
+                }
+
+                outputs.forEach((out, i) => {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = out.name;
+                    select.appendChild(opt);
+                });
+
+                select.addEventListener('change', () => {
+                    midiOutput = outputs[parseInt(select.value)];
+                    updateMIDIStatus(true);
+                    state.midi.device = midiOutput.name;
+                    saveState();
+                });
+
+                let found = false;
+                if (state.midi.device) {
+                    const idx = outputs.findIndex(o => o.name === state.midi.device);
+                    if (idx >= 0) {
+                        select.value = idx;
+                        midiOutput = outputs[idx];
+                        found = true;
+                    }
+                }
+                if (!found && outputs.length > 0) {
+                    midiOutput = outputs[0];
+                    select.value = 0;
+                }
+                updateMIDIStatus(!!midiOutput);
+
+                const chSelect = document.getElementById('midi-channel');
+                chSelect.innerHTML = '';
+                for (let i = 0; i < 16; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = 'Ch ' + (i + 1);
+                    chSelect.appendChild(opt);
+                }
+                chSelect.value = state.midi.channel || 0;
+                midiChannel = state.midi.channel || 0;
+                chSelect.addEventListener('change', () => {
+                    midiChannel = parseInt(chSelect.value);
+                    state.midi.channel = midiChannel;
+                    saveState();
+                });
+
+            } catch (err) {
+                console.error('Web MIDI error:', err);
+                document.getElementById('midi-status-text').textContent = t('webMidiNotSupported');
+            }
+        }
+
+        function updateMIDIStatus(connected) {
+            const dot = document.getElementById('midi-dot');
+            const txt = document.getElementById('midi-status-text');
+            dot.className = 'dot' + (connected ? ' connected' : '');
+            txt.textContent = connected ? t('connected') : t('disconnected');
+        }
+
+        // --- Library ---
+        function renderLibrary() {
+            const container = document.getElementById('preset-list');
+            const search = document.getElementById('search-box').value.toLowerCase();
+            container.innerHTML = '';
+
+            for (let bank = 0; bank < TOTAL_BANKS; bank++) {
+                const group = document.createElement('div');
+                group.className = 'bank-group';
+
+                const label = document.createElement('div');
+                label.className = 'bank-label';
+                label.textContent = t('bankLabel') + String(bank).padStart(2, '0');
+                group.appendChild(label);
+
+                let bankHasVisible = false;
+
+                for (const slot of SLOTS) {
+                    const pc = pcFromBankSlot(bank, slot);
+                    const info = getPresetInfo(bank, slot);
+                    const display = String(bank).padStart(2, '0') + slot;
+
+                    if (search && !info.name.toLowerCase().includes(search) && !display.includes(search)) {
+                        continue;
+                    }
+
+                    bankHasVisible = true;
+
+                    const row = document.createElement('div');
+                    row.className = 'preset-row' + (pc === activePresetPC ? ' active' : '');
+                    row.draggable = true;
+                    row.dataset.source = 'library';
+                    row.dataset.bank = bank;
+                    row.dataset.slot = slot;
+                    row.dataset.pc = pc;
+
+                    row.addEventListener('click', () => {
+                        bankSelectAndPC(bank, slot);
+                    });
+
+                    row.addEventListener('dblclick', (e) => {
+                        e.preventDefault();
+                        openEditModal('library', bank, slot);
+                    });
+
+                    row.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', JSON.stringify({
+                            source: 'library',
+                            bank: bank,
+                            slot: slot
+                        }));
+                        e.dataTransfer.effectAllowed = 'move';
+                        row.classList.add('dragging');
+                        setTimeout(() => row.classList.remove('dragging'), 0);
+                    });
+
+                    row.addEventListener('dragend', () => row.classList.remove('dragging'));
+
+                    const slotEl = document.createElement('span');
+                    slotEl.className = 'preset-slot';
+                    slotEl.textContent = slot;
+
+                    const nameEl = document.createElement('span');
+                    nameEl.className = 'preset-name';
+                    nameEl.textContent = info.name;
+
+                    const badges = document.createElement('span');
+                    badges.className = 'preset-badges';
+
+                    const ampBadge = document.createElement('span');
+                    ampBadge.className = 'badge ' + (info.amp ? 'amp-on' : 'amp-off');
+                    ampBadge.textContent = 'AMP';
+                    badges.appendChild(ampBadge);
+
+                    const cabBadge = document.createElement('span');
+                    cabBadge.className = 'badge ' + (info.cab ? 'cab-on' : 'cab-off');
+                    cabBadge.textContent = 'CAB';
+                    badges.appendChild(cabBadge);
+
+                    row.appendChild(slotEl);
+                    row.appendChild(nameEl);
+                    row.appendChild(badges);
+                    group.appendChild(row);
+                }
+
+                if (bankHasVisible) {
+                    container.appendChild(group);
+                }
+            }
+        }
+
+        // --- Grid ---
+        function renderGrid() {
+            const grid = document.getElementById('preset-grid');
+            grid.innerHTML = '';
+
+            for (let i = 0; i < 9; i++) {
+                const btn = document.createElement('div');
+                btn.className = 'grid-btn';
+                btn.dataset.slotIndex = i;
+
+                const assigned = state.buttons[i];
+
+                if (assigned) {
+                    const info = getPresetInfo(assigned.bank, assigned.slot);
+                    btn.innerHTML =
+                        '<span class="btn-slot">' + String(assigned.bank).padStart(2,'0') + assigned.slot + '</span>' +
+                        '<span class="btn-name">' + escapeHtml(info.name) + '</span>' +
+                        '<span class="btn-badges">' +
+                            '<span class="badge ' + (info.amp ? 'amp-on' : 'amp-off') + '">AMP</span>' +
+                            '<span class="badge ' + (info.cab ? 'cab-on' : 'cab-off') + '">CAB</span>' +
+                        '</span>';
+
+                    btn.classList.remove('empty');
+                    btn.draggable = true;
+
+                    btn.addEventListener('click', (e) => {
+                        if (justDragged) return;
+                        bankSelectAndPC(assigned.bank, assigned.slot);
+                    });
+
+                    btn.addEventListener('dblclick', (e) => {
+                        e.preventDefault();
+                        openEditModal('grid', null, null, i);
+                    });
+
+                    btn.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', JSON.stringify({
+                            source: 'grid',
+                            buttonIndex: i,
+                            bank: assigned.bank,
+                            slot: assigned.slot
+                        }));
+                        e.dataTransfer.effectAllowed = 'move';
+                        btn.style.opacity = '0.4';
+                        setTimeout(() => btn.style.opacity = '', 0);
+                    });
+
+                    btn.addEventListener('dragend', () => btn.style.opacity = '');
+
+                } else {
+                    btn.classList.add('empty');
+                    btn.innerHTML = '<span class="empty-label">' + t('empty') + '</span>';
+                }
+
+                btn.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    btn.classList.add('drag-over');
+                });
+
+                btn.addEventListener('dragleave', () => btn.classList.remove('drag-over'));
+
+                btn.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    btn.classList.remove('drag-over');
+                    try {
+                        const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                        handleDrop(data, i);
+                    } catch(err) {}
+                });
+
+                grid.appendChild(btn);
+            }
+        }
+
+        function handleDrop(data, targetIndex) {
+            justDragged = true;
+            setTimeout(() => justDragged = false, 100);
+            if (data.source === 'library') {
+                state.buttons[targetIndex] = { bank: data.bank, slot: data.slot };
+                saveState();
+                renderGrid();
+                renderLibrary();
+            } else if (data.source === 'grid') {
+                const sourceIndex = data.buttonIndex;
+                if (sourceIndex === targetIndex) return;
+
+                const targetData = state.buttons[targetIndex];
+                const sourceData = state.buttons[sourceIndex];
+
+                if (targetData) {
+                    state.buttons[sourceIndex] = targetData;
+                    state.buttons[targetIndex] = sourceData;
+                } else {
+                    state.buttons[targetIndex] = sourceData;
+                    delete state.buttons[sourceIndex];
+                }
+                saveState();
+                renderGrid();
+                renderLibrary();
+            }
+        }
+
+        // --- Trash ---
+        function initTrash() {
+            const trash = document.getElementById('trash-zone');
+
+            trash.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                try {
+                    const raw = e.dataTransfer.types.includes('text/plain');
+                    if (raw) {
+                        e.dataTransfer.dropEffect = 'move';
+                        trash.classList.add('drag-over');
+                    }
+                } catch(err) {}
+            });
+
+            trash.addEventListener('dragleave', () => trash.classList.remove('drag-over'));
+
+            trash.addEventListener('drop', (e) => {
+                e.preventDefault();
+                trash.classList.remove('drag-over');
+                try {
+                    const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+                    if (data.source === 'grid') {
+                        delete state.buttons[data.buttonIndex];
+                        saveState();
+                        renderGrid();
+                    }
+                } catch(err) {}
+            });
+        }
+
+        // --- Edit Modal ---
+        function openEditModal(source, bank, slot, buttonIndex) {
+            const overlay = document.getElementById('edit-overlay');
+            const title = document.getElementById('edit-title');
+            const nameInput = document.getElementById('edit-name');
+            const ampCheck = document.getElementById('edit-amp');
+            const cabCheck = document.getElementById('edit-cab');
+            const deleteBtn = document.getElementById('edit-delete');
+
+            let editBank, editSlot;
+            if (source === 'grid' && buttonIndex !== undefined) {
+                const assigned = state.buttons[buttonIndex];
+                if (!assigned) return;
+                editBank = assigned.bank;
+                editSlot = assigned.slot;
+                title.textContent = t('editButton') + (buttonIndex + 1);
+                deleteBtn.style.display = 'inline-block';
+            } else {
+                editBank = bank;
+                editSlot = slot;
+                title.textContent = t('editPreset') + String(bank).padStart(2,'0') + editSlot;
+                deleteBtn.style.display = 'none';
+            }
+
+            const info = getPresetInfo(editBank, editSlot);
+            nameInput.value = info.name;
+            ampCheck.checked = info.amp;
+            cabCheck.checked = info.cab;
+
+            editingButtonSlot = { bank: editBank, slot: editSlot, source, buttonIndex };
+            overlay.style.display = 'flex';
+            nameInput.focus();
+            nameInput.select();
+        }
+
+        function closeEditModal() {
+            document.getElementById('edit-overlay').style.display = 'none';
+            editingButtonSlot = null;
+        }
+
+        document.getElementById('edit-cancel').addEventListener('click', closeEditModal);
+
+        document.getElementById('edit-overlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeEditModal();
+        });
+
+        document.getElementById('edit-save').addEventListener('click', () => {
+            if (!editingButtonSlot) return;
+            const key = getPresetKey(editingButtonSlot.bank, editingButtonSlot.slot);
+            state.presets[key] = {
+                name: document.getElementById('edit-name').value || 'Preset',
+                amp: document.getElementById('edit-amp').checked,
+                cab: document.getElementById('edit-cab').checked
+            };
+            saveState();
+            closeEditModal();
+            renderGrid();
+            renderLibrary();
+        });
+
+        document.getElementById('edit-delete').addEventListener('click', () => {
+            if (!editingButtonSlot || editingButtonSlot.source !== 'grid') return;
+            delete state.buttons[editingButtonSlot.buttonIndex];
+            saveState();
+            closeEditModal();
+            renderGrid();
+        });
+
+        document.getElementById('edit-name').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('edit-save').click();
+            if (e.key === 'Escape') closeEditModal();
+        });
+
+        // --- Utils ---
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // --- USB Serial Sync (HDLC protocol with CRC-CCITT) ---
+        let serialPort = null;
+        let rxBuffer = [];
+        let rxResolve = null;
+
+        function bytesToHex(bytes) {
+            return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        }
+
+        function crcCCITT(data) {
+            let crc = 0xFFFF;
+            for (let i = 0; i < data.length; i++) {
+                crc ^= data[i];
+                for (let j = 0; j < 8; j++) {
+                    crc = (crc & 1) ? ((crc >> 1) ^ 0x8408) : (crc >> 1);
+                }
+            }
+            return ~crc & 0xFFFF;
+        }
+
+        function stuffByte(output, byte) {
+            if (byte === 0x7E || byte === 0x7D) {
+                output.push(0x7D, byte ^ 0x20);
+            } else {
+                output.push(byte);
+            }
+            return 1;
+        }
+
+        function buildFrame(payload) {
+            const out = [0x7E];
+            for (let i = 0; i < payload.length; i++) {
+                stuffByte(out, payload[i]);
+            }
+            const crc = crcCCITT(payload);
+            stuffByte(out, crc & 0xFF);
+            stuffByte(out, (crc >> 8) & 0xFF);
+            out.push(0x7E);
+            return new Uint8Array(out);
+        }
+
+        function deframe(frameBytes) {
+            if (frameBytes.length < 4 || frameBytes[0] !== 0x7E || frameBytes[frameBytes.length - 1] !== 0x7E) {
+                return null;
+            }
+            const unstuffed = [];
+            for (let i = 1; i < frameBytes.length - 1; i++) {
+                if (frameBytes[i] === 0x7D) {
+                    if (i + 1 < frameBytes.length - 1) {
+                        unstuffed.push(frameBytes[i + 1] ^ 0x20);
+                        i++;
+                    }
+                } else if (frameBytes[i] === 0x7E) {
+                    break;
+                } else {
+                    unstuffed.push(frameBytes[i]);
+                }
+            }
+            if (unstuffed.length < 2) return null;
+            const payload = new Uint8Array(unstuffed.slice(0, unstuffed.length - 2));
+            const recvCrc = unstuffed[unstuffed.length - 2] | (unstuffed[unstuffed.length - 1] << 8);
+            const calcCrc = crcCCITT(payload);
+            if (recvCrc !== calcCrc) {
+                console.log('CRC mismatch:', bytesToHex(new Uint8Array([recvCrc & 0xFF, (recvCrc >> 8) & 0xFF])),
+                            '!=', bytesToHex(new Uint8Array([calcCrc & 0xFF, (calcCrc >> 8) & 0xFF])));
+                return null;
+            }
+            return payload;
+        }
+
+        async function startReadLoop(reader) {
+            try {
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    if (value) {
+                        for (const byte of value) {
+                            rxBuffer.push(byte);
+                        }
+                        if (rxResolve) {
+                            const r = rxResolve;
+                            rxResolve = null;
+                            r();
+                        }
+                    }
+                }
+            } catch(e) {
+                console.log('[SYNC] readLoop error:', e.message);
+            }
+        }
+
+        function waitBytes(timeoutMs) {
+            return new Promise(resolve => {
+                const timer = setTimeout(() => resolve(false), timeoutMs);
+                const check = () => {
+                    if (rxBuffer.length > 0) {
+                        clearTimeout(timer);
+                        resolve(true);
+                    } else {
+                        rxResolve = check;
+                    }
+                };
+                check();
+            });
+        }
+
+        async function readFrame(timeoutMs) {
+            let buf = [];
+            const deadline = Date.now() + (timeoutMs || 3000);
+            while (Date.now() < deadline) {
+                const remaining = deadline - Date.now();
+                if (remaining <= 0) break;
+                const gotData = await waitBytes(Math.min(remaining, 2000));
+                if (!gotData) break;
+                while (rxBuffer.length > 0) {
+                    const byte = rxBuffer.shift();
+                    if (byte === 0x7E) {
+                        if (buf.length > 0) {
+                            buf.push(0x7E);
+                            const payload = deframe(buf);
+                            if (payload) {
+                                console.log('RX payload:', bytesToHex(payload));
+                                return payload;
+                            }
+                            console.log('RX bad frame, discarding');
+                        }
+                        buf = [0x7E];
+                    } else if (buf.length > 0) {
+                        buf.push(byte);
+                    }
+                }
+            }
+            return null;
+        }
+
+        async function sendFrame(writer, payload) {
+            const frame = buildFrame(payload);
+            console.log('TX:', bytesToHex(frame));
+            await writer.write(frame);
+        }
+
+        function delay(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function extractAfterMarker(data, marker) {
+            for (let i = 0; i <= data.length - marker.length; i++) {
+                let match = true;
+                for (let j = 0; j < marker.length; j++) {
+                    if (data[i + j] !== marker[j]) { match = false; break; }
+                }
+                if (match) return data.slice(i + marker.length);
+            }
+            return null;
+        }
+
+        function decodePresetName(data) {
+            let str = '';
+            for (let i = 0; i < data.length && i < 32; i++) {
+                if (data[i] === 0) break;
+                str += String.fromCharCode(data[i]);
+            }
+            return str.trim();
+        }
+
+        const HELLO_CMD = new Uint8Array([0xb9, 0x03, 0x00, 0x82, 0x04, 0x00, 0x80, 0x10, 0x01, 0xb9, 0x02, 0x02, 0x10]);
+        const REQUEST_STATE_CMD = new Uint8Array([0xb9, 0x03, 0x00, 0x82, 0x06, 0x00, 0x80, 0x10, 0x03, 0xb9, 0x02, 0x81, 0x01, 0x02, 0x10]);
+        const NAME_MARKER = new Uint8Array([0xB9, 0x04, 0xB9, 0x02, 0xBC, 0x21]);
+        const PARAM_MARKER = new Uint8Array([0xBA, 0x03, 0xBA, 0x6D]);
+        const AMP_ENABLE_INDEX = 17;
+        const CAB_TYPE_INDEX = 22;
+        const FLOAT_SIZE = 5;
+
+        function readFloat32(bytes, offset) {
+            if (offset + 4 > bytes.length) return null;
+            const view = new DataView(new ArrayBuffer(4));
+            view.setUint8(0, bytes[offset]);
+            view.setUint8(1, bytes[offset + 1]);
+            view.setUint8(2, bytes[offset + 2]);
+            view.setUint8(3, bytes[offset + 3]);
+            return view.getFloat32(0, true);
+        }
+
+        async function syncUSB() {
+            const syncBtn = document.getElementById('syncUSB');
+            const progressEl = document.getElementById('syncProgress');
+            const fillEl = document.getElementById('syncProgressFill');
+            const textEl = document.getElementById('syncProgressText');
+
+            if (serialPort && serialPort.readable) {
+                try { await serialPort.close(); } catch(e) {}
+                serialPort = null;
+                syncBtn.textContent = '\ud83d\udd0c Sync USB';
+                progressEl.classList.remove('active');
+                return;
+            }
+
+            try {
+                serialPort = await navigator.serial.requestPort();
+                await serialPort.open({ baudRate: 115200 });
+            } catch(e) {
+                alert(t('portError') + e.message);
+                serialPort = null;
+                return;
+            }
+
+            syncBtn.textContent = '\u23f9 ' + t('cancelSync');
+            progressEl.classList.add('active');
+            textEl.textContent = t('portOpening');
+            fillEl.style.width = '0%';
+            console.log('[SYNC] Port opened');
+
+            const reader = serialPort.readable.getReader();
+            const writer = serialPort.writable.getWriter();
+            console.log('[SYNC] Reader/Writer acquired');
+
+            rxBuffer = [];
+            rxResolve = null;
+            const readLoopDone = startReadLoop(reader);
+
+            try {
+                await delay(500);
+                rxBuffer = [];
+
+                textEl.textContent = 'Hello...';
+                console.log('[SYNC] Sending hello...');
+                await sendFrame(writer, HELLO_CMD);
+                const helloResp = await readFrame(3000);
+                console.log('[SYNC] Hello response:', helloResp ? bytesToHex(helloResp) : 'null');
+
+                await delay(200);
+                rxBuffer = [];
+
+                textEl.textContent = 'State...';
+                console.log('[SYNC] Sending state...');
+                await sendFrame(writer, REQUEST_STATE_CMD);
+                const stateResp = await readFrame(3000);
+                console.log('[SYNC] State response:', stateResp ? bytesToHex(stateResp) : 'null');
+
+                await delay(200);
+                rxBuffer = [];
+
+                const total = 150;
+                let loaded = 0;
+                let successCount = 0;
+
+                for (let i = 0; i < total; i++) {
+                    if (!serialPort || !serialPort.readable) break;
+
+                    textEl.textContent = (loaded + 1) + ' / ' + total + '...';
+                    fillEl.style.width = Math.round(loaded / total * 100) + '%';
+
+                    let presetReq;
+                    if (i < 128) {
+                        presetReq = new Uint8Array([
+                            0xb9, 0x03, 0x81, 0x00, 0x02, 0x82, 0x06, 0x00, 0x80, 0x10, 0x03, 0xb9, 0x04, 0x10, 0x01, i, 0x00
+                        ]);
+                    } else {
+                        presetReq = new Uint8Array([
+                            0xb9, 0x03, 0x81, 0x00, 0x02, 0x82, 0x06, 0x00, 0x80, 0x10, 0x03, 0xb9, 0x04, 0x10, 0x01, 0x80, i, 0x00
+                        ]);
+                    }
+
+                    rxBuffer = [];
+                    await sendFrame(writer, presetReq);
+
+                    const response = await readFrame(3000);
+                    if (response) {
+                        const afterMarker = extractAfterMarker(response, NAME_MARKER);
+                        if (afterMarker && afterMarker.length >= 4) {
+                            const nameData = afterMarker.slice(0, 32);
+                            const name = decodePresetName(nameData);
+                            if (name.length > 0) {
+                                const bank = Math.floor(i / 3);
+                                const slot = SLOTS[i % 3];
+                                const key = getPresetKey(bank, slot);
+                                if (!state.presets[key]) state.presets[key] = {};
+                                state.presets[key].name = name;
+
+                                const afterParam = extractAfterMarker(response, PARAM_MARKER);
+                                if (afterParam && afterParam.length >= CAB_TYPE_INDEX * FLOAT_SIZE + 5) {
+                                    const ampOff = AMP_ENABLE_INDEX * FLOAT_SIZE;
+                                    if (afterParam[ampOff] === 0x88) {
+                                        state.presets[key].amp = readFloat32(afterParam, ampOff + 1) > 0.5;
+                                    }
+                                    const cabOff = CAB_TYPE_INDEX * FLOAT_SIZE;
+                                    if (afterParam[cabOff] === 0x88) {
+                                        state.presets[key].cab = readFloat32(afterParam, cabOff + 1) > 0.5;
+                                    }
+                                }
+
+                                if (i < 3) {
+                                    console.log('[SYNC] Preset', i, name, 'AMP:', state.presets[key].amp, 'CAB:', state.presets[key].cab);
+                                }
+
+                                successCount++;
+                            }
+                        }
+                    } else {
+                        console.log('[SYNC] No response for preset', i);
+                    }
+
+                    loaded++;
+                    await delay(50);
+                }
+
+                saveState();
+                renderLibrary();
+                renderGrid();
+                textEl.textContent = t('syncDone') + successCount + '/' + total + t('syncPresetsRead');
+                fillEl.style.width = '100%';
+            } catch(e) {
+                console.error('Sync error:', e);
+                textEl.textContent = t('syncError') + e.message;
+            } finally {
+                try { reader.releaseLock(); } catch(e) {}
+                try { writer.releaseLock(); } catch(e) {}
+                if (serialPort) {
+                    try { await serialPort.close(); } catch(e) {}
+                    serialPort = null;
+                }
+                syncBtn.textContent = '\ud83d\udd0c Sync USB';
+                setTimeout(() => progressEl.classList.remove('active'), 3000);
+            }
+        }
+
+        document.getElementById('syncUSB').addEventListener('click', syncUSB);
+
+        // --- Init ---
+        document.getElementById('search-box').addEventListener('input', renderLibrary);
+
+        initTrash();
+        applyLang();
+        renderGrid();
+        renderLibrary();
+        initMIDI();
+
+    })();
+    </script>
+</body>
+</html>
