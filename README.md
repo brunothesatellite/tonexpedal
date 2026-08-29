@@ -25,8 +25,6 @@ Single-page web controller for the IK Multimedia TONEX Pedal. Manages presets vi
 | Pedal | IK Multimedia TONEX Pedal (full size) |
 | Cable | USB-C connected to the pedal's USB port |
 
-> **Note:** Web Serial API requires HTTPS or localhost. Serve via a local web server (e.g. `https://your-server/tonexpedal/`) or `localhost`.
-
 ## Installation
 
 ### Option 1 — Local web server (recommended)
@@ -46,6 +44,10 @@ python -m http.server 3000
 ```
 
 Then open `http://localhost:3000`.
+
+### Option 3 — Static file (no server required)
+
+Simply double-click `index.html` or open it via `file:///` in your browser. The UI and library work, but **Web MIDI and Web Serial are unavailable** — you can edit presets manually but cannot send MIDI or sync via USB.
 
 ## Usage
 

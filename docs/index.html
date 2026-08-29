@@ -291,7 +291,7 @@
     </table>
 
     <div class="warning">
-        <strong data-t="warn-title">Important :</strong> <span data-t="warn-text">L'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas.</span>
+        <strong data-t="warn-title">Important :</strong> <span data-t="warn-text">L'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas pour le MIDI et le USB.</span>
     </div>
 
     <h2 id="h-install">Installation</h2>
@@ -306,6 +306,9 @@ npx serve -s . -l 3000
 # ou
 python -m http.server 3000</code></pre>
     <p data-t="install-opt2-puis">Puis ouvrir <code>http://localhost:3000</code>.</p>
+
+    <h3 data-t="install-opt3">Option 3 — Fichier statique (sans serveur)</h3>
+    <p data-t="install-opt3-desc">Simplement double-cliquer sur <code>index.html</code> ou l'ouvrir via <code>file:///</code> dans votre navigateur. L'interface et la bibliothèque fonctionnent, mais <strong>Web MIDI et Web Serial ne sont pas disponibles</strong> — vous pouvez éditer les presets manuellement mais pas envoyer de MIDI ni synchroniser via USB.</p>
 
     <h2 id="h-usage">Utilisation</h2>
 
@@ -539,11 +542,13 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'prereq-browser': 'Navigateur', 'prereq-browser-val': 'Chrome 89+ ou Edge 89+ (Web MIDI + Web Serial)',
             'prereq-os': 'Système', 'prereq-pedal': 'Pédalier', 'prereq-cable': 'Câble',
             'prereq-cable-val': 'USB-C connecté au port USB du pédalier',
-            'warn-title': 'Important :', 'warn-text': 'L\'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas.',
+            'warn-title': 'Important :', 'warn-text': 'L\'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas pour le MIDI et le USB.',
             'h-install': 'Installation',
             'install-opt1': 'Option 1 — Serveur web local (recommandé)',
             'install-opt1-desc': 'Copier le dossier <code>tonexpedal/</code> dans le répertoire racine de votre serveur web :',
             'install-opt2-puis': 'Puis ouvrir <code>http://localhost:3000</code>.',
+            'install-opt3': 'Option 3 — Fichier statique (sans serveur)',
+            'install-opt3-desc': 'Simplement double-cliquer sur <code>index.html</code> ou l\'ouvrir via <code>file:///</code> dans votre navigateur. L\'interface et la bibliothèque fonctionnent, mais <strong>Web MIDI et Web Serial ne sont pas disponibles</strong> — vous pouvez éditer les presets manuellement mais pas envoyer de MIDI ni synchroniser via USB.',
             'h-usage': 'Utilisation',
             'usage-midi-title': 'Connexion MIDI',
             'usage-midi-1': 'Brancher le TONEX Pedal en USB',
@@ -637,11 +642,13 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'prereq-browser': 'Browser', 'prereq-browser-val': 'Chrome 89+ or Edge 89+ (Web MIDI + Web Serial)',
             'prereq-os': 'OS', 'prereq-pedal': 'Pedal', 'prereq-cable': 'Cable',
             'prereq-cable-val': 'USB-C connected to the pedal USB port',
-            'warn-title': 'Important:', 'warn-text': 'Web Serial API requires <strong>HTTPS</strong> or <strong>localhost</strong>. A simple <code>file://</code> will not work.',
+            'warn-title': 'Important:', 'warn-text': 'Web Serial API requires <strong>HTTPS</strong> or <strong>localhost</strong>. A simple <code>file://</code> will not work for MIDI and USB.',
             'h-install': 'Installation',
             'install-opt1': 'Option 1 — Local web server (recommended)',
             'install-opt1-desc': 'Copy the <code>tonexpedal/</code> folder to your web server root:',
             'install-opt2-puis': 'Then open <code>http://localhost:3000</code>.',
+            'install-opt3': 'Option 3 — Static file (no server required)',
+            'install-opt3-desc': 'Simply double-click <code>index.html</code> or open it via <code>file:///</code> in your browser. The UI and library work, but <strong>Web MIDI and Web Serial are unavailable</strong> — you can edit presets manually but cannot send MIDI or sync via USB.',
             'h-usage': 'Usage',
             'usage-midi-title': 'MIDI Connection',
             'usage-midi-1': 'Connect the TONEX Pedal via USB',
