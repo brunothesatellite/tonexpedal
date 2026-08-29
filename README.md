@@ -16,6 +16,8 @@ Single-page web controller for the IK Multimedia TONEX Pedal. Manages presets vi
 - **Persistence** — configuration saved in localStorage
 - **Responsive** — adaptive text via `container-type: inline-size` + `cqi` units
 
+- **Export/Import JSON** — export preset names to a file, import them on another setup
+
 ## Prerequisites
 
 | Component | Required version |
@@ -66,6 +68,20 @@ Simply double-click `index.html` or open it via `file:///` in your browser.
 3. Progress shows: Hello → State → Reading 150 presets
 4. Names and AMP/CAB badges fill in automatically
 5. Button shows **Done! X/150 presets read**
+
+### Export / Import JSON
+
+- Click **⬇ JSON** to download all preset names as `tonex-presets.json`
+- Click **⬆ JSON** to import a previously exported file (validates format, replaces names)
+
+JSON format:
+```json
+{
+  "0_A": "Trooper - 80s Pack",
+  "0_B": "80s Lead - 80s Pack",
+  "1_A": "Final Countdown - 80s Pack"
+}
+```
 
 ### 3×3 Grid
 

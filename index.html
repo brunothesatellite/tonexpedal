@@ -535,6 +535,9 @@
                 <span id="midi-status-text" data-i18n="disconnected">Non connecté</span>
             </div>
             <button id="syncUSB" class="sync-btn" title="Sync preset names via USB">🔌 Sync USB</button>
+            <button id="exportJSON" class="sync-btn" title="Export preset names to JSON">⬇ JSON</button>
+            <button id="importJSON" class="sync-btn" title="Import preset names from JSON">⬆ JSON</button>
+            <input type="file" id="importFileInput" accept=".json" style="display:none">
             <div id="syncProgress" class="sync-progress">
                 <div class="sync-progress-bar"><div id="syncProgressFill" class="sync-progress-fill"></div></div>
                 <span id="syncProgressText" class="sync-progress-text"></span>
@@ -614,7 +617,13 @@
                 syncError: 'Erreur: ',
                 portError: 'Impossible d\'ouvrir le port s\u00e9rie: ',
                 langToggle: 'EN',
-                htmlLang: 'fr'
+                htmlLang: 'fr',
+                exportJSON: 'Exporter les noms en JSON',
+                importJSON: 'Importer les noms depuis JSON',
+                exportDone: 'Export termin\u00e9!',
+                importDone: 'Import termin\u00e9!',
+                importInvalid: 'Fichier JSON invalide ou format incorrect',
+                importCount: ' presets import\u00e9s'
             },
             en: {
                 device: 'Device:',
@@ -645,7 +654,13 @@
                 syncError: 'Error: ',
                 portError: 'Cannot open serial port: ',
                 langToggle: 'FR',
-                htmlLang: 'en'
+                htmlLang: 'en',
+                exportJSON: 'Export preset names to JSON',
+                importJSON: 'Import preset names from JSON',
+                exportDone: 'Export done!',
+                importDone: 'Import done!',
+                importInvalid: 'Invalid JSON file or incorrect format',
+                importCount: ' presets imported'
             }
         };
 
@@ -682,6 +697,8 @@
             }
 
             document.getElementById('syncUSB').title = t('syncTitle');
+            document.getElementById('exportJSON').title = t('exportJSON');
+            document.getElementById('importJSON').title = t('importJSON');
 
             if (document.getElementById('active-preset').dataset.base !== undefined) {
                 updateActivePresetDisplay();
@@ -1500,6 +1517,68 @@
         }
 
         document.getElementById('syncUSB').addEventListener('click', syncUSB);
+
+        // --- Export / Import JSON ---
+        document.getElementById('exportJSON').addEventListener('click', () => {
+            const exportData = {};
+            for (let bank = 0; bank < TOTAL_BANKS; bank++) {
+                for (const slot of SLOTS) {
+                    const key = getPresetKey(bank, slot);
+                    const info = state.presets[key];
+                    if (info && info.name) {
+                        exportData[key] = info.name;
+                    }
+                }
+            }
+            const json = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tonex-presets.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        document.getElementById('importJSON').addEventListener('click', () => {
+            document.getElementById('importFileInput').click();
+        });
+
+        document.getElementById('importFileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+                        alert(t('importInvalid'));
+                        return;
+                    }
+                    let count = 0;
+                    for (const [key, name] of Object.entries(data)) {
+                        const match = key.match(/^(\d+)_([ABC])$/);
+                        if (!match) continue;
+                        if (typeof name !== 'string' || name.length === 0) continue;
+                        const bank = parseInt(match[1]);
+                        const slot = match[2];
+                        if (bank < 0 || bank >= TOTAL_BANKS) continue;
+                        const presetKey = getPresetKey(bank, slot);
+                        if (!state.presets[presetKey]) state.presets[presetKey] = {};
+                        state.presets[presetKey].name = name;
+                        count++;
+                    }
+                    saveState();
+                    renderLibrary();
+                    renderGrid();
+                    alert(t('importDone') + ' ' + count + t('importCount'));
+                } catch(err) {
+                    alert(t('importInvalid'));
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
 
         // --- Init ---
         document.getElementById('search-box').addEventListener('input', renderLibrary);

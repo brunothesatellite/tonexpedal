@@ -279,6 +279,7 @@
         <li><strong data-t="feat-edit">Édition</strong> — <span data-t="feat-edit-desc">double-clic pour renommer et toggler AMP/CAB</span></li>
         <li><strong data-t="feat-search">Recherche</strong> <span data-t="feat-search-desc">filtrante dans la bibliothèque</span></li>
         <li><strong data-t="feat-persist">Persistance</strong> — <span data-t="feat-persist-desc">configuration sauvegardée en localStorage</span></li>
+        <li><strong data-t="feat-export">Export/Import JSON</strong> — <span data-t="feat-export-desc">exporte les noms de presets vers un fichier, importe sur une autre config</span></li>
     </ul>
 
     <h2 id="h-prereq">Prérequis</h2>
@@ -343,6 +344,8 @@ python -m http.server 3000</code></pre>
         <tr><td data-t="act-drag-trash">Glisser un bouton → corbeille</td><td data-t="act-drag-trash-desc">Vide le bouton</td></tr>
         <tr><td data-t="act-dblclick">Double-clic sur un bouton ou preset</td><td data-t="act-dblclick-desc">Ouvre le modal d'édition (nom, AMP, CAB)</td></tr>
         <tr><td data-t="act-search">Taper dans la barre de recherche</td><td data-t="act-search-desc">Filtre la bibliothèque par nom ou numéro</td></tr>
+        <tr><td data-t="act-export">Cliquer sur ⬇ JSON</td><td data-t="act-export-desc">Exporte les noms de presets en fichier JSON</td></tr>
+        <tr><td data-t="act-import">Cliquer sur ⬆ JSON</td><td data-t="act-import-desc">Importe un fichier JSON de presets (valide et remplace les noms)</td></tr>
     </table>
 
     <h3 data-t="badges-title">Badges AMP/CAB</h3>
@@ -537,6 +540,7 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'feat-edit': 'Édition', 'feat-edit-desc': 'double-clic pour renommer et toggler AMP/CAB',
             'feat-search': 'Recherche', 'feat-search-desc': 'filtrante dans la bibliothèque',
             'feat-persist': 'Persistance', 'feat-persist-desc': 'configuration sauvegardée en localStorage',
+            'feat-export': 'Export/Import JSON', 'feat-export-desc': 'exporte les noms de presets vers un fichier, importe sur une autre config',
             'h-prereq': 'Prérequis',
             'th-component': 'Composant', 'th-version': 'Version requise',
             'prereq-browser': 'Navigateur', 'prereq-browser-val': 'Chrome 89+ ou Edge 89+ (Web MIDI + Web Serial)',
@@ -571,6 +575,8 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'act-drag-trash': 'Glisser un bouton → corbeille', 'act-drag-trash-desc': 'Vide le bouton',
             'act-dblclick': 'Double-clic sur un bouton ou preset', 'act-dblclick-desc': 'Ouvre le modal d\'édition (nom, AMP, CAB)',
             'act-search': 'Taper dans la barre de recherche', 'act-search-desc': 'Filtre la bibliothèque par nom ou numéro',
+            'act-export': 'Cliquer sur ⬇ JSON', 'act-export-desc': 'Exporte les noms de presets en fichier JSON',
+            'act-import': 'Cliquer sur ⬆ JSON', 'act-import-desc': 'Importe un fichier JSON de presets (valide et remplace les noms)',
             'badges-title': 'Badges AMP/CAB',
             'badges-desc': 'Chaque preset affiche deux badges indiquant son état :',
             'badges-amp-on': '= Amplificateur actif', 'badges-amp-off': '= Amplificateur désactivé',
@@ -637,6 +643,7 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'feat-edit': 'Editing', 'feat-edit-desc': 'double-click to rename and toggle AMP/CAB',
             'feat-search': 'Search', 'feat-search-desc': 'filtering in the library',
             'feat-persist': 'Persistence', 'feat-persist-desc': 'configuration saved in localStorage',
+            'feat-export': 'Export/Import JSON', 'feat-export-desc': 'export preset names to a file, import on another setup',
             'h-prereq': 'Prerequisites',
             'th-component': 'Component', 'th-version': 'Required version',
             'prereq-browser': 'Browser', 'prereq-browser-val': 'Chrome 89+ or Edge 89+ (Web MIDI + Web Serial)',
@@ -671,6 +678,8 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'act-drag-trash': 'Drag a button → trash', 'act-drag-trash-desc': 'Clears the button',
             'act-dblclick': 'Double-click a button or preset', 'act-dblclick-desc': 'Opens edit modal (name, AMP, CAB)',
             'act-search': 'Type in the search bar', 'act-search-desc': 'Filters the library by name or number',
+            'act-export': 'Click ⬇ JSON', 'act-export-desc': 'Exports preset names to a JSON file',
+            'act-import': 'Click ⬆ JSON', 'act-import-desc': 'Imports a JSON preset file (validates and replaces names)',
             'badges-title': 'AMP/CAB Badges',
             'badges-desc': 'Each preset shows two badges indicating its state:',
             'badges-amp-on': '= Amplifier active', 'badges-amp-off': '= Amplifier disabled',
