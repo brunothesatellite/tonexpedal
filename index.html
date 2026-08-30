@@ -561,6 +561,55 @@
         .sync-progress-text {
             white-space: nowrap;
         }
+
+        @media (max-width: 700px) {
+            .library-panel {
+                width: 260px;
+                min-width: 0;
+            }
+            .library-toggle {
+                left: 258px;
+                right: auto;
+            }
+            .main-layout.collapsed .library-toggle {
+                left: 0;
+            }
+            .grid-btn .btn-slot {
+                font-size: 10px;
+            }
+            .grid-btn .btn-preset {
+                font-size: 13px;
+            }
+            .grid-btn .btn-name {
+                font-size: 12px;
+                white-space: normal;
+                line-height: 1.2;
+            }
+            .grid-btn .btn-badges .badge {
+                font-size: 9px;
+                padding: 2px 4px;
+            }
+            .grid-btn .empty-label {
+                font-size: 12px;
+            }
+            header {
+                padding: 6px 12px;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .header-row {
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            footer {
+                padding: 6px 12px;
+                font-size: 0.75em;
+            }
+            .grid-btn {
+                padding: 6px;
+                gap: 3px;
+            }
+        }
     </style>
 </head>
 <body>
