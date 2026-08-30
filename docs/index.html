@@ -263,6 +263,25 @@
     height: auto;         /* garde les proportions */
     display: block;
 }
+
+.yt-row {
+    display: flex;
+    justify-content: center;   /* centre le bloc */
+    gap: 0;                    /* aucune séparation */
+}
+
+.yt-row a {
+    display: block;
+}
+
+.yt-row img {
+    width: auto;               /* garde la taille naturelle */
+    height: 180px;             /* même hauteur pour les deux (modifiable) */
+    margin: 0;
+    padding: 0;
+    display: block;
+}
+
     </style>
 </head>
 <body>
@@ -288,6 +307,20 @@
         </div>
         <figcaption id="cap-fig-android">Interface complète — Android</figcaption>
     </figure>
+
+<figure class="screenshot yt-pair">
+    <div class="yt-row">
+        <a href="https://www.youtube.com/watch?v=ZrpM73ms7fk" target="_blank">
+            <img src="https://img.youtube.com/vi/ZrpM73ms7fk/0.jpg" alt="Video PC">
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=XhKJ70A9dGQ" target="_blank">
+            <img src="https://img.youtube.com/vi/XhKJ70A9dGQ/0.jpg" alt="Video Android">
+        </a>
+    </div>
+    <figcaption id="cap-fig-videos">Démonstrations vidéo — PC & Android</figcaption>
+</figure>
+
 
     <h2 id="h-features">Fonctionnalités</h2>
     <ul id="features-list">
@@ -581,6 +614,7 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'hero-desc': 'Contrôleur web pour l\'IK Multimedia TONEX Pedal — Grille 3×3, synchronisation USB, bibliothèque de presets.',
             'cap-fig': 'Interface complète — bibliothèque à gauche, grille 3×3 à droite',
             'cap-fig-android': 'Interface complète — Android',
+            'cap-fig-videos': 'Démonstrations vidéo — PC & Android',
             'h-features': 'Fonctionnalités',
             'feat-grid': 'Grille 3×3', 'feat-grid-desc': 'de presets assignables avec noms et badges AMP/CAB',
             'feat-lib': 'Bibliothèque complète', 'feat-lib-desc': 'des 150 presets (50 banks × 3 slots A/B/C)',
@@ -700,6 +734,7 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'hero-desc': 'Web controller for IK Multimedia TONEX Pedal — 3×3 grid, USB sync, preset library.',
             'cap-fig': 'Full interface — library on the left, 3×3 grid on the right',
             'cap-fig-android': 'Full interface — Android',
+            'cap-fig-videos': 'Video demonstrations — PC & Android',
             'h-features': 'Features',
             'feat-grid': '3×3 Grid', 'feat-grid-desc': 'of assignable presets with names and AMP/CAB badges',
             'feat-lib': 'Full library', 'feat-lib-desc': 'of 150 presets (50 banks × 3 slots A/B/C)',
