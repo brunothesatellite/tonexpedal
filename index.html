@@ -108,6 +108,7 @@
         .main-layout {
             display: flex;
             height: calc(100vh - 52px);
+            position: relative;
         }
 
         .library-panel {
@@ -279,6 +280,50 @@
             align-items: stretch;
             justify-content: stretch;
             padding: 16px;
+        }
+
+        .library-toggle {
+            position: absolute;
+            left: 396px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 24px;
+            height: 48px;
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            color: #533483;
+            font-size: 14px;
+            cursor: pointer;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: left 0.3s, color 0.2s;
+        }
+
+        .library-toggle:hover {
+            color: #e94560;
+        }
+
+        .main-layout.collapsed .library-panel {
+            width: 0;
+            min-width: 0;
+            overflow: hidden;
+            border: none;
+        }
+
+        .main-layout.collapsed .library-toggle {
+            left: 0;
+        }
+
+        .main-layout.collapsed .library-toggle::after {
+            content: '◀';
+        }
+
+        .library-toggle::after {
+            content: '▶';
         }
 
         .preset-grid {
@@ -545,7 +590,7 @@
         </div>
     </header>
 
-    <div class="main-layout">
+    <div class="main-layout" id="main-layout">
         <div class="library-panel">
             <div class="library-header">
                 <div class="trash-zone" id="trash-zone">
@@ -556,6 +601,8 @@
             </div>
             <div class="preset-list" id="preset-list"></div>
         </div>
+
+        <button class="library-toggle" id="library-toggle" title="Masquer/Afficher la bibliothèque"></button>
 
         <div class="grid-panel">
             <div class="preset-grid" id="preset-grid"></div>
@@ -1660,6 +1707,15 @@
             };
             reader.readAsText(file);
             e.target.value = '';
+        });
+
+        // --- Library Toggle ---
+        const toggleBtn = document.getElementById('library-toggle');
+        const mainLayout = document.getElementById('main-layout');
+        if (localStorage.getItem('tonex-library-collapsed') === 'true') mainLayout.classList.add('collapsed');
+        toggleBtn.addEventListener('click', () => {
+            mainLayout.classList.toggle('collapsed');
+            localStorage.setItem('tonex-library-collapsed', mainLayout.classList.contains('collapsed'));
         });
 
         // --- Init ---
