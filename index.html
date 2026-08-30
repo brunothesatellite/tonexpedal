@@ -1197,6 +1197,11 @@
         let serialPort = null;
         let rxBuffer = [];
         let rxResolve = null;
+        let usbDevice = null;
+        let usbEpIn = 1;
+        let usbEpOut = 2;
+        let usbReadAbort = null;
+        let useUsb = false;
 
         function bytesToHex(bytes) {
             return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
@@ -1263,27 +1268,6 @@
             return payload;
         }
 
-        async function startReadLoop(reader) {
-            try {
-                while (true) {
-                    const { value, done } = await reader.read();
-                    if (done) break;
-                    if (value) {
-                        for (const byte of value) {
-                            rxBuffer.push(byte);
-                        }
-                        if (rxResolve) {
-                            const r = rxResolve;
-                            rxResolve = null;
-                            r();
-                        }
-                    }
-                }
-            } catch(e) {
-                console.log('[SYNC] readLoop error:', e.message);
-            }
-        }
-
         function waitBytes(timeoutMs) {
             return new Promise(resolve => {
                 const timer = setTimeout(() => resolve(false), timeoutMs);
@@ -1328,14 +1312,64 @@
             return null;
         }
 
-        async function sendFrame(writer, payload) {
-            const frame = buildFrame(payload);
-            console.log('TX:', bytesToHex(frame));
-            await writer.write(frame);
-        }
-
         function delay(ms) {
             return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // --- Transport abstraction (Web Serial / WebUSB) ---
+        async function transportSend(frame) {
+            if (useUsb) {
+                await usbDevice.transferOut(usbEpOut, frame);
+            } else {
+                const writer = serialPort.writable.getWriter();
+                try { await writer.write(frame); } finally { writer.releaseLock(); }
+            }
+        }
+
+        async function transportStartRead() {
+            if (useUsb) {
+                usbReadAbort = new AbortController();
+                try {
+                    while (!usbReadAbort.signal.aborted) {
+                        const result = await usbDevice.transferIn(usbEpIn, 64);
+                        if (result.status !== 'ok') break;
+                        const data = new Uint8Array(result.data.buffer);
+                        for (const byte of data) rxBuffer.push(byte);
+                        if (rxResolve) { const r = rxResolve; rxResolve = null; r(); }
+                    }
+                } catch(e) {
+                    if (e.name !== 'AbortError') console.log('[SYNC] USB read error:', e.message);
+                }
+            } else {
+                const reader = serialPort.readable.getReader();
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) break;
+                        if (value) {
+                            for (const byte of value) rxBuffer.push(byte);
+                            if (rxResolve) { const r = rxResolve; rxResolve = null; r(); }
+                        }
+                    }
+                } catch(e) { console.log('[SYNC] readLoop error:', e.message); }
+            }
+        }
+
+        function transportIsOpen() {
+            if (useUsb) return usbDevice && usbDevice.opened;
+            return serialPort && serialPort.readable;
+        }
+
+        async function transportDisconnect() {
+            if (useUsb) {
+                if (usbReadAbort) { usbReadAbort.abort(); usbReadAbort = null; }
+                try { await usbDevice.close(); } catch(e) {}
+                usbDevice = null;
+                useUsb = false;
+            } else if (serialPort) {
+                try { await serialPort.close(); } catch(e) {}
+                serialPort = null;
+            }
         }
 
         function extractAfterMarker(data, marker) {
@@ -1379,20 +1413,77 @@
             const fillEl = document.getElementById('syncProgressFill');
             const textEl = document.getElementById('syncProgressText');
 
-            if (serialPort && serialPort.readable) {
-                try { await serialPort.close(); } catch(e) {}
-                serialPort = null;
+            if (transportIsOpen()) {
+                await transportDisconnect();
                 syncBtn.textContent = '\ud83d\udd0c Sync USB';
                 progressEl.classList.remove('active');
                 return;
             }
 
-            try {
-                serialPort = await navigator.serial.requestPort();
-                await serialPort.open({ baudRate: 115200 });
-            } catch(e) {
-                alert(t('portError') + e.message);
-                serialPort = null;
+            // Try Web Serial first, then WebUSB fallback
+            useUsb = false;
+            if ('serial' in navigator) {
+                try {
+                    serialPort = await navigator.serial.requestPort();
+                    await serialPort.open({ baudRate: 115200 });
+                } catch(e) {
+                    console.log('[SYNC] Web Serial failed:', e.message, '- trying WebUSB');
+                    serialPort = null;
+                }
+            }
+            if (!serialPort && 'usb' in navigator) {
+                try {
+                    let device = null;
+                    try { device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x1963 }] }); } catch(e) {}
+                    if (!device) try { device = await navigator.usb.requestDevice({ filters: [] }); } catch(e) {}
+                    if (!device) throw new Error('No device selected');
+                    await device.open();
+                    await device.selectConfiguration(1);
+
+                    console.log('[SYNC] Interfaces:', device.configuration.interfaces.length);
+                    let cdcCtrlIface = -1;
+                    let cdcDataIface = -1;
+                    for (const iface of device.configuration.interfaces) {
+                        for (const alt of iface.alternates) {
+                            console.log('[SYNC] Iface #' + iface.interfaceNumber + ' alt#' + alt.alternateSetting + ' class=0x' + alt.interfaceClass.toString(16) + ' endpoints=' + alt.endpoints.length);
+                            if (alt.interfaceClass === 0x02) cdcCtrlIface = iface.interfaceNumber;
+                            if (alt.interfaceClass === 0x0A) cdcDataIface = iface.interfaceNumber;
+                        }
+                    }
+                    if (cdcDataIface === -1) {
+                        for (const iface of device.configuration.interfaces) {
+                            for (const alt of iface.alternates) {
+                                if (alt.endpoints.some(e => e.type === 'bulk')) {
+                                    cdcDataIface = iface.interfaceNumber;
+                                    break;
+                                }
+                            }
+                            if (cdcDataIface !== -1) break;
+                        }
+                    }
+                    if (cdcDataIface === -1) { await device.close(); throw new Error('No data interface with bulk endpoints found'); }
+                    if (cdcCtrlIface !== -1) {
+                        await device.claimInterface(cdcCtrlIface);
+                        await device.controlTransferOut({ requestType: 'class', recipient: 'interface', request: 0x20, value: 0x00, index: cdcCtrlIface }, new Uint8Array([0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08]));
+                        await device.controlTransferOut({ requestType: 'class', recipient: 'interface', request: 0x22, value: 0x03, index: cdcCtrlIface });
+                        console.log('[SYNC] CDC control interface', cdcCtrlIface, 'initialized');
+                    }
+                    await device.claimInterface(cdcDataIface);
+                    const dataAlt = device.configuration.interfaces[cdcDataIface].alternates[0];
+                    for (const ep of dataAlt.endpoints) {
+                        if (ep.direction === 'in' && ep.type === 'bulk') usbEpIn = ep.endpointNumber;
+                        if (ep.direction === 'out' && ep.type === 'bulk') usbEpOut = ep.endpointNumber;
+                    }
+                    console.log('[SYNC] CDC data interface', cdcDataIface, 'epIn=' + usbEpIn, 'epOut=' + usbEpOut);
+                    usbDevice = device;
+                    useUsb = true;
+                } catch(e) {
+                    alert(t('portError') + e.message);
+                    return;
+                }
+            }
+            if (!serialPort && !useUsb) {
+                alert(t('portError') + ('serial' in navigator ? '' : 'Web Serial unavailable'));
                 return;
             }
 
@@ -1400,15 +1491,11 @@
             progressEl.classList.add('active');
             textEl.textContent = t('portOpening');
             fillEl.style.width = '0%';
-            console.log('[SYNC] Port opened');
-
-            const reader = serialPort.readable.getReader();
-            const writer = serialPort.writable.getWriter();
-            console.log('[SYNC] Reader/Writer acquired');
+            console.log('[SYNC] Port opened via', useUsb ? 'WebUSB' : 'Web Serial');
 
             rxBuffer = [];
             rxResolve = null;
-            const readLoopDone = startReadLoop(reader);
+            transportStartRead();
 
             try {
                 await delay(500);
@@ -1416,7 +1503,7 @@
 
                 textEl.textContent = 'Hello...';
                 console.log('[SYNC] Sending hello...');
-                await sendFrame(writer, HELLO_CMD);
+                await transportSend(buildFrame(HELLO_CMD));
                 const helloResp = await readFrame(3000);
                 console.log('[SYNC] Hello response:', helloResp ? bytesToHex(helloResp) : 'null');
 
@@ -1425,7 +1512,7 @@
 
                 textEl.textContent = 'State...';
                 console.log('[SYNC] Sending state...');
-                await sendFrame(writer, REQUEST_STATE_CMD);
+                await transportSend(buildFrame(REQUEST_STATE_CMD));
                 const stateResp = await readFrame(3000);
                 console.log('[SYNC] State response:', stateResp ? bytesToHex(stateResp) : 'null');
 
@@ -1437,7 +1524,7 @@
                 let successCount = 0;
 
                 for (let i = 0; i < total; i++) {
-                    if (!serialPort || !serialPort.readable) break;
+                    if (!transportIsOpen()) break;
 
                     textEl.textContent = (loaded + 1) + ' / ' + total + '...';
                     fillEl.style.width = Math.round(loaded / total * 100) + '%';
@@ -1454,7 +1541,7 @@
                     }
 
                     rxBuffer = [];
-                    await sendFrame(writer, presetReq);
+                    await transportSend(buildFrame(presetReq));
 
                     const response = await readFrame(3000);
                     if (response) {
@@ -1505,12 +1592,7 @@
                 console.error('Sync error:', e);
                 textEl.textContent = t('syncError') + e.message;
             } finally {
-                try { reader.releaseLock(); } catch(e) {}
-                try { writer.releaseLock(); } catch(e) {}
-                if (serialPort) {
-                    try { await serialPort.close(); } catch(e) {}
-                    serialPort = null;
-                }
+                await transportDisconnect();
                 syncBtn.textContent = '\ud83d\udd0c Sync USB';
                 setTimeout(() => progressEl.classList.remove('active'), 3000);
             }
