@@ -2,7 +2,19 @@
 
 Contrôleur web single-page pour l'IK Multimedia TONEX Pedal. Gère les presets via USB MIDI et lit les noms/configurations directement depuis le pédalier via l'interface série USB CDC.
 
-![Interface](captures/tnx1.png)
+Ordinateur :
+![Interface PC](captures/tnx1.png)
+
+Téléphone Android :
+![Interface Android1](captures/android1.png)
+![Interface Android2](captures/android2.png)
+
+
+Démo vidéo PC :
+[![Video PC](https://img.youtube.com/vi/ZrpM73ms7fk/0.jpg)](https://www.youtube.com/watch?v=ZrpM73ms7fk)
+
+Démo vidéo Android :
+[![Video Android](https://img.youtube.com/vi/XhKJ70A9dGQ/0.jpg)](https://www.youtube.com/watch?v=XhKJ70A9dGQ)
 
 ## Fonctionnalités
 
@@ -230,8 +242,8 @@ Tout est sauvegardé en `localStorage` sous la clé `tonex-state` :
 
 ## Crédits
 
-- Protocole USB CDC : reverse-engineered depuis [Builty/usb_tonex_one](https://github.com/Builty/usb_tonex_one)
-- Documentation protocole : [vit3k/tonex-one-js](https://github.com/vit3k/tonex-one-js)
+- Protocole USB CDC : reverse-engineered depuis [Builty/TonexOneController](https://github.com/Builty/TonexOneController)
+- Documentation protocole : [vit3k/tonex_controller](https://github.com/vit3k/tonex_controller)
 - Interface : IK Multimedia TONEX Pedal Controller v1.1
 
 ## Licence

@@ -251,6 +251,18 @@
             pre { font-size: 0.78em; }
             .lang-toggle { position: static; margin-top: 12px; display: inline-block; }
         }
+
+        .android-row {
+    display: flex;
+    width: 100%;          /* même largeur que tnx1 */
+    gap: 0;               /* pas d'espace entre les images */
+}
+
+.android-row img {
+    width: 50%;           /* 2 images = 50% + 50% = 100% */
+    height: auto;         /* garde les proportions */
+    display: block;
+}
     </style>
 </head>
 <body>
@@ -259,14 +271,22 @@
     <button id="langToggle" class="lang-toggle">EN</button>
     <h1>TONEX Pedal Controller</h1>
     <p id="hero-desc">Contrôleur web pour l'IK Multimedia TONEX Pedal — Grille 3×3, synchronisation USB, bibliothèque de presets.</p>
-    <span class="version">v1.1 — 2026</span>
+    <span class="version">v2.0 — 2026</span>
 </div>
 
 <div class="container">
 
-    <figure class="screenshot">
-        <img src="../captures/tnx1.png" alt="TONEX Pedal Controller interface">
-        <figcaption id="cap-fig">Interface complète — bibliothèque à gauche, grille 3×3 à droite</figcaption>
+   <figure class="screenshot">
+    <img src="../captures/tnx1.png" alt="TONEX Pedal Controller interface PC">
+    <figcaption id="cap-fig">Interface complète — bibliothèque à gauche, grille 3×3 à droite (PC)</figcaption>
+    </figure>
+
+    <figure class="screenshot android-pair">
+        <div class="android-row">
+            <img src="../captures/android1.png" alt="TONEX Pedal Controller interface Android1">
+            <img src="../captures/android2.png" alt="TONEX Pedal Controller interface Android2">
+        </div>
+        <figcaption id="cap-fig-android">Interface complète — Android</figcaption>
     </figure>
 
     <h2 id="h-features">Fonctionnalités</h2>
@@ -543,8 +563,8 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
 
     <h2 data-t="h-credits">Crédits</h2>
     <ul>
-        <li data-t="credit-builty">Protocole USB CDC : reverse-engineered depuis <a href="https://github.com/Builty/usb_tonex_one" style="color:var(--accent)">Builty/usb_tonex_one</a></li>
-        <li data-t="credit-vit3k">Documentation protocole : <a href="https://github.com/vit3k/tonex-one-js" style="color:var(--accent)">vit3k/tonex-one-js</a></li>
+        <li data-t="credit-builty">Protocole USB CDC : reverse-engineered depuis <a href="https://github.com/Builty/TonexOneController" style="color:var(--accent)">Builty/TonexOneController</a></li>
+        <li data-t="credit-vit3k">Documentation protocole : <a href="https://github.com/vit3k/tonex_controller" style="color:var(--accent)">vit3k/tonex_controller</a></li>
     </ul>
 
 </div>
@@ -560,6 +580,7 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
         fr: {
             'hero-desc': 'Contrôleur web pour l\'IK Multimedia TONEX Pedal — Grille 3×3, synchronisation USB, bibliothèque de presets.',
             'cap-fig': 'Interface complète — bibliothèque à gauche, grille 3×3 à droite',
+            'cap-fig-android': 'Interface complète — Android',
             'h-features': 'Fonctionnalités',
             'feat-grid': 'Grille 3×3', 'feat-grid-desc': 'de presets assignables avec noms et badges AMP/CAB',
             'feat-lib': 'Bibliothèque complète', 'feat-lib-desc': 'des 150 presets (50 banks × 3 slots A/B/C)',
@@ -670,14 +691,15 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'ts-empty': 'Page vide après chargement', 'ts-empty-sol': 'Recharger. Vider localStorage si corrompu',
             'ts-android-sync': 'Android : Sync ne lit pas les données', 'ts-android-sync-sol': 'Le fallback WebUSB devrait s\'activer automatiquement. Vérifier les logs d\'interface/endpoint dans la console',
             'h-credits': 'Crédits',
-            'credit-builty': 'Protocole USB CDC : reverse-engineered depuis <a href="https://github.com/Builty/usb_tonex_one" style="color:var(--accent)">Builty/usb_tonex_one</a>',
-            'credit-vit3k': 'Documentation protocole : <a href="https://github.com/vit3k/tonex-one-js" style="color:var(--accent)">vit3k/tonex-one-js</a>',
+            'credit-builty': 'Protocole USB CDC : reverse-engineered depuis <a href="https://github.com/Builty/TonexOneController" style="color:var(--accent)">Builty/TonexOneController</a>',
+            'credit-vit3k': 'Documentation protocole : <a href="https://github.com/vit3k/tonex_controller" style="color:var(--accent)">vit3k/tonex_controller</a>',
             'footer-back': '← Retour au contrôleur',
             'langToggle': 'EN', 'htmlLang': 'fr'
         },
         en: {
             'hero-desc': 'Web controller for IK Multimedia TONEX Pedal — 3×3 grid, USB sync, preset library.',
             'cap-fig': 'Full interface — library on the left, 3×3 grid on the right',
+            'cap-fig-android': 'Full interface — Android',
             'h-features': 'Features',
             'feat-grid': '3×3 Grid', 'feat-grid-desc': 'of assignable presets with names and AMP/CAB badges',
             'feat-lib': 'Full library', 'feat-lib-desc': 'of 150 presets (50 banks × 3 slots A/B/C)',
@@ -788,8 +810,8 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'ts-empty': 'Page empty after load', 'ts-empty-sol': 'Reload. Clear localStorage if corrupted',
             'ts-android-sync': 'Android: Sync doesn\'t read data', 'ts-android-sync-sol': 'WebUSB fallback should auto-activate. Check interface/endpoint logs in console',
             'h-credits': 'Credits',
-            'credit-builty': 'USB CDC protocol: reverse-engineered from <a href="https://github.com/Builty/usb_tonex_one" style="color:var(--accent)">Builty/usb_tonex_one</a>',
-            'credit-vit3k': 'Protocol docs: <a href="https://github.com/vit3k/tonex-one-js" style="color:var(--accent)">vit3k/tonex-one-js</a>',
+            'credit-builty': 'USB CDC protocol: reverse-engineered from <a href="https://github.com/Builty/TonexOneController" style="color:var(--accent)">Builty/TonexOneController</a>',
+            'credit-vit3k': 'Protocol docs: <a href="https://github.com/vit3k/tonex_controller" style="color:var(--accent)">vit3k/tonex_controller</a>',
             'footer-back': '← Back to controller',
             'langToggle': 'FR', 'htmlLang': 'en'
         }
