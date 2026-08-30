@@ -15,19 +15,22 @@ Contrôleur web single-page pour l'IK Multimedia TONEX Pedal. Gère les presets 
 - **Recherche** filtrante dans la bibliothèque
 - **Persistance** — configuration sauvegardée en localStorage
 - **Responsive** — texte adaptatif via `container-type: inline-size` + unités `cqi`
-
+- **Bascule bibliothèque** — chevron discret pour minimiser/étendre la bibliothèque de presets
 - **Export/Import JSON** — exporte les noms de presets vers un fichier, importe sur une autre config
+- **Support Android** — fonctionne sur Android Chrome via fallback WebUSB (Web Serial non disponible sur Android)
 
 ## Prérequis
 
 | Composant | Version requise |
 |-----------|----------------|
 | Navigateur | Chrome 89+ ou Edge 89+ (Web MIDI + Web Serial API) |
-| Système | Windows 10/11 |
+| Système | Windows 10/11, Android (via WebUSB) |
 | Pédalier | IK Multimedia TONEX Pedal (full size) |
 | Câble | USB-C connecté au port USB du pédalier |
 
 > **Note** : L'API Web Serial nécessite HTTPS ou localhost. Servir via un serveur web local (ex: `https://mon-serveur/tonexpedal/`) ou `localhost`.
+
+> **Note Android** : Sur Android, Web Serial n'est pas disponible — l'application utilise le fallback WebUSB pour la communication USB CDC. Le MIDI n'est pas disponible sur Android (pas d'API Web MIDI).
 
 ## Installation
 
@@ -99,6 +102,7 @@ Format JSON :
 - **Double-clic** → édite le nom et les flags AMP/CAB
 - **Recherche** → filtre par nom ou numéro de bank/slot
 - **Glisser** vers la grille → assigne le preset
+- **Chevron** (▶/◀) sur la bordure du panneau → minimise/étend la bibliothèque
 
 ## Architecture technique
 
@@ -173,6 +177,27 @@ La section paramètres commence par le marker `BA 03 BA 6D` (`PARAM_MARKER`), su
 - **TONEX Pedal (full size)** : `0x10`
 - TONEX One : `0x0B` (non supporté)
 
+### Abstraction de transport (Support Android)
+
+L'application utilise une couche d'abstraction de transport pour supporter à la fois **Web Serial** (desktop) et **WebUSB** (Android) :
+
+```
+transportSend(frame)      → Serial.write() ou USB.bulkTransferOut()
+transportStartRead()      → boucle reader Serial ou boucle USB.bulkTransferIn()
+transportIsOpen()         → serialPort.opened ou usbDevice.opened
+transportDisconnect()     → serialPort.close() ou usbDevice.close()
+```
+
+**Flux de connexion :**
+1. Essayer **Web Serial** en premier (desktop Chrome/Edge)
+2. Si non disponible ou échec, fallback vers **WebUSB** (Android Chrome)
+3. WebUSB affiche le sélecteur de device filtré par VID `0x1963` (IK Multimedia)
+
+**Configuration WebUSB CDC :**
+- Trouver l'interface CDC Communication (classe `0x02`) → control transfers (SET_LINE_CODING, SET_CONTROL_LINE_STATE)
+- Trouver l'interface CDC Data (classe `0x0A`) → bulk endpoints pour les données HDLC
+- Si la classe `0x0A` n'est pas trouvée, fallback sur toute interface avec des bulk endpoints
+
 ### Persistance
 
 Tout est sauvegardé en `localStorage` sous la clé `tonex-state` :
@@ -201,6 +226,7 @@ Tout est sauvegardé en `localStorage` sous la clé `tonex-state` :
 | Noms ne s'affichent pas | Relancer le Sync USB. Vérifier la console (F12) pour les erreurs |
 | AMP/CAB toujours gris | Vérifier dans la console que les float32 sont correctement lus |
 | Canvas vide | Recharger la page, le localStorage peut être corrompu |
+| Android : Sync ne lit pas les données | Le fallback WebUSB devrait s'activer automatiquement. Vérifier les logs d'interface/endpoint dans la console |
 
 ## Crédits
 

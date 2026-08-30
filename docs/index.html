@@ -280,19 +280,21 @@
         <li><strong data-t="feat-search">Recherche</strong> <span data-t="feat-search-desc">filtrante dans la bibliothèque</span></li>
         <li><strong data-t="feat-persist">Persistance</strong> — <span data-t="feat-persist-desc">configuration sauvegardée en localStorage</span></li>
         <li><strong data-t="feat-export">Export/Import JSON</strong> — <span data-t="feat-export-desc">exporte les noms de presets vers un fichier, importe sur une autre config</span></li>
+        <li><strong data-t="feat-toggle">Bascule bibliothèque</strong> — <span data-t="feat-toggle-desc">chevron discret pour minimiser/étendre la bibliothèque de presets</span></li>
+        <li><strong data-t="feat-android">Support Android</strong> — <span data-t="feat-android-desc">fonctionne sur Android Chrome via fallback WebUSB</span></li>
     </ul>
 
     <h2 id="h-prereq">Prérequis</h2>
     <table>
         <tr><th data-t="th-component">Composant</th><th data-t="th-version">Version requise</th></tr>
         <tr><td data-t="prereq-browser">Navigateur</td><td data-t="prereq-browser-val">Chrome 89+ ou Edge 89+ (Web MIDI + Web Serial)</td></tr>
-        <tr><td data-t="prereq-os">Système</td><td>Windows 10/11</td></tr>
+        <tr><td data-t="prereq-os">Système</td><td data-t="prereq-os-val">Windows 10/11, Android (via WebUSB)</td></tr>
         <tr><td data-t="prereq-pedal">Pédalier</td><td>IK Multimedia TONEX Pedal (full size)</td></tr>
         <tr><td data-t="prereq-cable">Câble</td><td data-t="prereq-cable-val">USB-C connecté au port USB du pédalier</td></tr>
     </table>
 
     <div class="warning">
-        <strong data-t="warn-title">Important :</strong> <span data-t="warn-text">L'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas pour le MIDI et le USB.</span>
+        <strong data-t="warn-title">Important :</strong> <span data-t="warn-text">L'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas pour le MIDI et le USB. Sur Android, le fallback WebUSB s'active automatiquement.</span>
     </div>
 
     <h2 id="h-install">Installation</h2>
@@ -346,6 +348,7 @@ python -m http.server 3000</code></pre>
         <tr><td data-t="act-search">Taper dans la barre de recherche</td><td data-t="act-search-desc">Filtre la bibliothèque par nom ou numéro</td></tr>
         <tr><td data-t="act-export">Cliquer sur ⬇ JSON</td><td data-t="act-export-desc">Exporte les noms de presets en fichier JSON</td></tr>
         <tr><td data-t="act-import">Cliquer sur ⬆ JSON</td><td data-t="act-import-desc">Importe un fichier JSON de presets (valide et remplace les noms)</td></tr>
+        <tr><td data-t="act-toggle">Cliquer sur le chevron (▶/◀)</td><td data-t="act-toggle-desc">Minimise/étend la bibliothèque de presets</td></tr>
     </table>
 
     <h3 data-t="badges-title">Badges AMP/CAB</h3>
@@ -485,7 +488,32 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
    b. <span data-t="seq-7b">Lire réponse</span>
    c. <span data-t="seq-7c">Extraire nom (après NAME_MARKER)</span>
    d. <span data-t="seq-7d">Extraire AMP/CAB (après PARAM_MARKER)</span>
-8. <span data-t="seq-8">Sauvegarder en localStorage</span></code></pre>
+ 8. <span data-t="seq-8">Sauvegarder en localStorage</span></code></pre>
+
+    <h2 data-t="h-transport">Abstraction de transport (Support Android)</h2>
+    <p data-t="transport-desc">L'application utilise une couche d'abstraction pour supporter à la fois <strong>Web Serial</strong> (desktop) et <strong>WebUSB</strong> (Android) :</p>
+    <pre><code>transportSend(frame)      → Serial.write() ou USB.bulkTransferOut()
+transportStartRead()      → boucle reader Serial ou boucle USB.bulkTransferIn()
+transportIsOpen()         → serialPort.opened ou usbDevice.opened
+transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pre>
+
+    <h3 data-t="transport-flow-title">Flux de connexion</h3>
+    <ol>
+        <li data-t="transport-flow-1">Essayer <strong>Web Serial</strong> en premier (desktop Chrome/Edge)</li>
+        <li data-t="transport-flow-2">Si non disponible ou échec, fallback vers <strong>WebUSB</strong> (Android Chrome)</li>
+        <li data-t="transport-flow-3">WebUSB affiche le sélecteur de device filtré par VID <code>0x1963</code> (IK Multimedia)</li>
+    </ol>
+
+    <h3 data-t="transport-cdc-title">Configuration WebUSB CDC</h3>
+    <ul>
+        <li data-t="transport-cdc-1">Trouver l'interface CDC Communication (classe <code>0x02</code>) → control transfers</li>
+        <li data-t="transport-cdc-2">Trouver l'interface CDC Data (classe <code>0x0A</code>) → bulk endpoints pour données HDLC</li>
+        <li data-t="transport-cdc-3">Si classe <code>0x0A</code> non trouvée, fallback sur toute interface avec bulk endpoints</li>
+    </ul>
+
+    <div class="info">
+        <strong>Android :</strong> <span data-t="transport-android-info">Sur Android, Web Serial n'est pas disponible. Le fallback WebUSB s'active automatiquement. Le MIDI n'est pas disponible sur Android (pas d'API Web MIDI).</span>
+    </div>
 
     <h2 data-t="h-persist">Persistance</h2>
     <p data-t="persist-desc">Tout est sauvegardé en <code>localStorage</code> sous la clé <code>tonex-state</code> :</p>
@@ -510,6 +538,7 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
         <tr><td data-t="ts-no-names">Noms ne s'affichent pas</td><td data-t="ts-no-names-sol">Relancer Sync USB. Console F12 pour erreurs</td></tr>
         <tr><td data-t="ts-grey-badges">AMP/CAB toujours gris</td><td data-t="ts-grey-badges-sol">Console F12 : vérifier les float32 lus (log des 3 premiers presets)</td></tr>
         <tr><td data-t="ts-empty">Page vide après chargement</td><td data-t="ts-empty-sol">Recharger. Vider localStorage si corrompu</td></tr>
+        <tr><td data-t="ts-android-sync">Android : Sync ne lit pas les données</td><td data-t="ts-android-sync-sol">Le fallback WebUSB devrait s'activer automatiquement. Vérifier les logs d'interface/endpoint dans la console</td></tr>
     </table>
 
     <h2 data-t="h-credits">Crédits</h2>
@@ -541,12 +570,14 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'feat-search': 'Recherche', 'feat-search-desc': 'filtrante dans la bibliothèque',
             'feat-persist': 'Persistance', 'feat-persist-desc': 'configuration sauvegardée en localStorage',
             'feat-export': 'Export/Import JSON', 'feat-export-desc': 'exporte les noms de presets vers un fichier, importe sur une autre config',
+            'feat-toggle': 'Bascule bibliothèque', 'feat-toggle-desc': 'chevron discret pour minimiser/étendre la bibliothèque de presets',
+            'feat-android': 'Support Android', 'feat-android-desc': 'fonctionne sur Android Chrome via fallback WebUSB',
             'h-prereq': 'Prérequis',
             'th-component': 'Composant', 'th-version': 'Version requise',
             'prereq-browser': 'Navigateur', 'prereq-browser-val': 'Chrome 89+ ou Edge 89+ (Web MIDI + Web Serial)',
-            'prereq-os': 'Système', 'prereq-pedal': 'Pédalier', 'prereq-cable': 'Câble',
+            'prereq-os': 'Système', 'prereq-os-val': 'Windows 10/11, Android (via WebUSB)', 'prereq-pedal': 'Pédalier', 'prereq-cable': 'Câble',
             'prereq-cable-val': 'USB-C connecté au port USB du pédalier',
-            'warn-title': 'Important :', 'warn-text': 'L\'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas pour le MIDI et le USB.',
+            'warn-title': 'Important :', 'warn-text': 'L\'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas pour le MIDI et le USB. Sur Android, le fallback WebUSB s\'active automatiquement.',
             'h-install': 'Installation',
             'install-opt1': 'Option 1 — Serveur web local (recommandé)',
             'install-opt1-desc': 'Copier le dossier <code>tonexpedal/</code> dans le répertoire racine de votre serveur web :',
@@ -577,6 +608,7 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'act-search': 'Taper dans la barre de recherche', 'act-search-desc': 'Filtre la bibliothèque par nom ou numéro',
             'act-export': 'Cliquer sur ⬇ JSON', 'act-export-desc': 'Exporte les noms de presets en fichier JSON',
             'act-import': 'Cliquer sur ⬆ JSON', 'act-import-desc': 'Importe un fichier JSON de presets (valide et remplace les noms)',
+            'act-toggle': 'Cliquer sur le chevron (▶/◀)', 'act-toggle-desc': 'Minimise/étend la bibliothèque de presets',
             'badges-title': 'Badges AMP/CAB',
             'badges-desc': 'Chaque preset affiche deux badges indiquant son état :',
             'badges-amp-on': '= Amplificateur actif', 'badges-amp-off': '= Amplificateur désactivé',
@@ -615,6 +647,17 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'seq-7c': 'Extraire nom (après NAME_MARKER)',
             'seq-7d': 'Extraire AMP/CAB (après PARAM_MARKER)',
             'seq-8': 'Sauvegarder en localStorage',
+            'h-transport': 'Abstraction de transport (Support Android)',
+            'transport-desc': 'L\'application utilise une couche d\'abstraction pour supporter à la fois <strong>Web Serial</strong> (desktop) et <strong>WebUSB</strong> (Android) :',
+            'transport-flow-title': 'Flux de connexion',
+            'transport-flow-1': 'Essayer <strong>Web Serial</strong> en premier (desktop Chrome/Edge)',
+            'transport-flow-2': 'Si non disponible ou échec, fallback vers <strong>WebUSB</strong> (Android Chrome)',
+            'transport-flow-3': 'WebUSB affiche le sélecteur de device filtré par VID <code>0x1963</code> (IK Multimedia)',
+            'transport-cdc-title': 'Configuration WebUSB CDC',
+            'transport-cdc-1': 'Trouver l\'interface CDC Communication (classe <code>0x02</code>) → control transfers',
+            'transport-cdc-2': 'Trouver l\'interface CDC Data (classe <code>0x0A</code>) → bulk endpoints pour données HDLC',
+            'transport-cdc-3': 'Si classe <code>0x0A</code> non trouvée, fallback sur toute interface avec bulk endpoints',
+            'transport-android-info': 'Sur Android, Web Serial n\'est pas disponible. Le fallback WebUSB s\'active automatiquement. Le MIDI n\'est pas disponible sur Android (pas d\'API Web MIDI).',
             'h-persist': 'Persistance',
             'persist-desc': 'Tout est sauvegardé en <code>localStorage</code> sous la clé <code>tonex-state</code> :',
             'h-troubleshoot': 'Dépannage',
@@ -625,6 +668,7 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'ts-no-names': 'Noms ne s\'affichent pas', 'ts-no-names-sol': 'Relancer Sync USB. Console F12 pour erreurs',
             'ts-grey-badges': 'AMP/CAB toujours gris', 'ts-grey-badges-sol': 'Console F12 : vérifier les float32 lus (log des 3 premiers presets)',
             'ts-empty': 'Page vide après chargement', 'ts-empty-sol': 'Recharger. Vider localStorage si corrompu',
+            'ts-android-sync': 'Android : Sync ne lit pas les données', 'ts-android-sync-sol': 'Le fallback WebUSB devrait s\'activer automatiquement. Vérifier les logs d\'interface/endpoint dans la console',
             'h-credits': 'Crédits',
             'credit-builty': 'Protocole USB CDC : reverse-engineered depuis <a href="https://github.com/Builty/usb_tonex_one" style="color:var(--accent)">Builty/usb_tonex_one</a>',
             'credit-vit3k': 'Documentation protocole : <a href="https://github.com/vit3k/tonex-one-js" style="color:var(--accent)">vit3k/tonex-one-js</a>',
@@ -644,12 +688,14 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'feat-search': 'Search', 'feat-search-desc': 'filtering in the library',
             'feat-persist': 'Persistence', 'feat-persist-desc': 'configuration saved in localStorage',
             'feat-export': 'Export/Import JSON', 'feat-export-desc': 'export preset names to a file, import on another setup',
+            'feat-toggle': 'Library toggle', 'feat-toggle-desc': 'discreet chevron to minimize/expand the preset library',
+            'feat-android': 'Android support', 'feat-android-desc': 'works on Android Chrome via WebUSB fallback',
             'h-prereq': 'Prerequisites',
             'th-component': 'Component', 'th-version': 'Required version',
             'prereq-browser': 'Browser', 'prereq-browser-val': 'Chrome 89+ or Edge 89+ (Web MIDI + Web Serial)',
-            'prereq-os': 'OS', 'prereq-pedal': 'Pedal', 'prereq-cable': 'Cable',
+            'prereq-os': 'OS', 'prereq-os-val': 'Windows 10/11, Android (via WebUSB)', 'prereq-pedal': 'Pedal', 'prereq-cable': 'Cable',
             'prereq-cable-val': 'USB-C connected to the pedal USB port',
-            'warn-title': 'Important:', 'warn-text': 'Web Serial API requires <strong>HTTPS</strong> or <strong>localhost</strong>. A simple <code>file://</code> will not work for MIDI and USB.',
+            'warn-title': 'Important:', 'warn-text': 'Web Serial API requires <strong>HTTPS</strong> or <strong>localhost</strong>. A simple <code>file://</code> will not work for MIDI and USB. On Android, WebUSB fallback activates automatically.',
             'h-install': 'Installation',
             'install-opt1': 'Option 1 — Local web server (recommended)',
             'install-opt1-desc': 'Copy the <code>tonexpedal/</code> folder to your web server root:',
@@ -680,6 +726,7 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'act-search': 'Type in the search bar', 'act-search-desc': 'Filters the library by name or number',
             'act-export': 'Click ⬇ JSON', 'act-export-desc': 'Exports preset names to a JSON file',
             'act-import': 'Click ⬆ JSON', 'act-import-desc': 'Imports a JSON preset file (validates and replaces names)',
+            'act-toggle': 'Click the chevron (▶/◀)', 'act-toggle-desc': 'Minimizes/expands the preset library',
             'badges-title': 'AMP/CAB Badges',
             'badges-desc': 'Each preset shows two badges indicating its state:',
             'badges-amp-on': '= Amplifier active', 'badges-amp-off': '= Amplifier disabled',
@@ -718,6 +765,17 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'seq-7c': 'Extract name (after NAME_MARKER)',
             'seq-7d': 'Extract AMP/CAB (after PARAM_MARKER)',
             'seq-8': 'Save to localStorage',
+            'h-transport': 'Transport Abstraction (Android Support)',
+            'transport-desc': 'The app uses a transport abstraction layer to support both <strong>Web Serial</strong> (desktop) and <strong>WebUSB</strong> (Android):',
+            'transport-flow-title': 'Connection Flow',
+            'transport-flow-1': 'Try <strong>Web Serial</strong> first (desktop Chrome/Edge)',
+            'transport-flow-2': 'If unavailable or fails, fallback to <strong>WebUSB</strong> (Android Chrome)',
+            'transport-flow-3': 'WebUSB shows device picker filtered by VID <code>0x1963</code> (IK Multimedia)',
+            'transport-cdc-title': 'WebUSB CDC Setup',
+            'transport-cdc-1': 'Find CDC Communication interface (class <code>0x02</code>) → control transfers',
+            'transport-cdc-2': 'Find CDC Data interface (class <code>0x0A</code>) → bulk endpoints for HDLC data',
+            'transport-cdc-3': 'If class <code>0x0A</code> not found, fallback to any interface with bulk endpoints',
+            'transport-android-info': 'On Android, Web Serial is not available. WebUSB fallback activates automatically. MIDI is not available on Android (no Web MIDI API).',
             'h-persist': 'Persistence',
             'persist-desc': 'Everything is saved in <code>localStorage</code> under the key <code>tonex-state</code>:',
             'h-troubleshoot': 'Troubleshooting',
@@ -728,6 +786,7 @@ slot = ['A', 'B', 'C'][pc % 3]</code></pre>
             'ts-no-names': 'Names don\'t appear', 'ts-no-names-sol': 'Re-run Sync USB. Console F12 for errors',
             'ts-grey-badges': 'AMP/CAB always grey', 'ts-grey-badges-sol': 'Console F12: check float32 values (log for first 3 presets)',
             'ts-empty': 'Page empty after load', 'ts-empty-sol': 'Reload. Clear localStorage if corrupted',
+            'ts-android-sync': 'Android: Sync doesn\'t read data', 'ts-android-sync-sol': 'WebUSB fallback should auto-activate. Check interface/endpoint logs in console',
             'h-credits': 'Credits',
             'credit-builty': 'USB CDC protocol: reverse-engineered from <a href="https://github.com/Builty/usb_tonex_one" style="color:var(--accent)">Builty/usb_tonex_one</a>',
             'credit-vit3k': 'Protocol docs: <a href="https://github.com/vit3k/tonex-one-js" style="color:var(--accent)">vit3k/tonex-one-js</a>',
