@@ -254,8 +254,18 @@
             font-weight: bold;
         }
 
-        .badge.amp-on {
+        .badge.amp-orange {
+            background: #e67e22;
+            color: #000;
+        }
+
+        .badge.amp-green {
             background: #4caf50;
+            color: #000;
+        }
+
+        .badge.amp-blue {
+            background: #2196f3;
             color: #000;
         }
 
@@ -264,7 +274,17 @@
             color: #666;
         }
 
-        .badge.cab-on {
+        .badge.cab-orange {
+            background: #e67e22;
+            color: #000;
+        }
+
+        .badge.cab-green {
+            background: #4caf50;
+            color: #000;
+        }
+
+        .badge.cab-blue {
             background: #2196f3;
             color: #000;
         }
@@ -629,6 +649,7 @@
                 <span id="midi-status-text" data-i18n="disconnected">Non connecté</span>
             </div>
             <button id="syncUSB" class="sync-btn" title="Sync preset names via USB">🔌 Sync USB</button>
+            <button id="traceUSB" class="sync-btn" title="Capturer trace brute des presets 34A-35C pour analyse">🔍 Trace</button>
             <button id="exportJSON" class="sync-btn" title="Export preset names to JSON">⬇ JSON</button>
             <button id="importJSON" class="sync-btn" title="Import preset names from JSON">⬆ JSON</button>
             <input type="file" id="importFileInput" accept=".json" style="display:none">
@@ -836,9 +857,28 @@
         function loadState() {
             try {
                 const s = JSON.parse(localStorage.getItem('tonex-state'));
-                if (s && s.buttons) return s;
+                if (s && s.buttons) {
+                    migrateState(s);
+                    return s;
+                }
             } catch(e) {}
             return defaultState();
+        }
+
+        function migrateState(s) {
+            if (!s.presets) return;
+            for (const key of Object.keys(s.presets)) {
+                const p = s.presets[key];
+                if ('amp' in p && !('ampOn' in p)) {
+                    p.ampOn = !!p.amp;
+                    p.stompOn = false;
+                    p.cabType = p.cab ? 2 : 0;
+                    delete p.amp;
+                    delete p.cab;
+                }
+                if (!('stompOn' in p)) p.stompOn = false;
+                if (!('cabType' in p)) p.cabType = 0;
+            }
         }
 
         function saveState() {
@@ -854,8 +894,9 @@
             if (!state.presets[key]) {
                 state.presets[key] = {
                     name: 'Preset ' + String(bank).padStart(2,'0') + slot,
-                    amp: false,
-                    cab: false
+                    ampOn: false,
+                    stompOn: false,
+                    cabType: 2
                 };
             }
             return state.presets[key];
@@ -916,44 +957,45 @@
             try {
                 const midiAccess = await navigator.requestMIDIAccess();
                 const select = document.getElementById('midi-device');
-                select.innerHTML = '';
+                const refreshOutputs = () => {
+                    const outputs = Array.from(midiAccess.outputs.values());
+                    const previousName = state.midi.device;
+                    select.innerHTML = '';
 
-                const outputs = Array.from(midiAccess.outputs.values());
-                if (outputs.length === 0) {
-                    const opt = document.createElement('option');
-                    opt.textContent = t('noDevice');
-                    select.appendChild(opt);
-                    return;
-                }
-
-                outputs.forEach((out, i) => {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.textContent = out.name;
-                    select.appendChild(opt);
-                });
-
-                select.addEventListener('change', () => {
-                    midiOutput = outputs[parseInt(select.value)];
-                    updateMIDIStatus(true);
-                    state.midi.device = midiOutput.name;
-                    saveState();
-                });
-
-                let found = false;
-                if (state.midi.device) {
-                    const idx = outputs.findIndex(o => o.name === state.midi.device);
-                    if (idx >= 0) {
-                        select.value = idx;
-                        midiOutput = outputs[idx];
-                        found = true;
+                    if (outputs.length === 0) {
+                        const opt = document.createElement('option');
+                        opt.textContent = t('noDevice');
+                        select.appendChild(opt);
+                        midiOutput = null;
+                        updateMIDIStatus(false);
+                        return;
                     }
-                }
-                if (!found && outputs.length > 0) {
-                    midiOutput = outputs[0];
-                    select.value = 0;
-                }
-                updateMIDIStatus(!!midiOutput);
+
+                    outputs.forEach((out, i) => {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.textContent = out.name || ('MIDI ' + (i + 1));
+                        select.appendChild(opt);
+                    });
+
+                    let selectedIndex = outputs.findIndex(o => o.name === previousName);
+                    if (selectedIndex < 0) selectedIndex = 0;
+                    select.value = selectedIndex;
+                    midiOutput = outputs[selectedIndex];
+                    updateMIDIStatus(true);
+                };
+
+                refreshOutputs();
+                midiAccess.onstatechange = refreshOutputs;
+                select.addEventListener('change', () => {
+                    const outputs = Array.from(midiAccess.outputs.values());
+                    midiOutput = outputs[parseInt(select.value, 10)] || null;
+                    updateMIDIStatus(!!midiOutput);
+                    if (midiOutput) {
+                        state.midi.device = midiOutput.name;
+                        saveState();
+                    }
+                });
 
                 const chSelect = document.getElementById('midi-channel');
                 chSelect.innerHTML = '';
@@ -1054,12 +1096,12 @@
                     badges.className = 'preset-badges';
 
                     const ampBadge = document.createElement('span');
-                    ampBadge.className = 'badge ' + (info.amp ? 'amp-on' : 'amp-off');
+                    ampBadge.className = 'badge ' + getAmpBadgeClass(info.ampOn, info.stompOn);
                     ampBadge.textContent = 'AMP';
                     badges.appendChild(ampBadge);
 
                     const cabBadge = document.createElement('span');
-                    cabBadge.className = 'badge ' + (info.cab ? 'cab-on' : 'cab-off');
+                    cabBadge.className = 'badge ' + getCabBadgeClass(info.cabType);
                     cabBadge.textContent = 'CAB';
                     badges.appendChild(cabBadge);
 
@@ -1093,8 +1135,8 @@
                         '<span class="btn-slot">' + String(assigned.bank).padStart(2,'0') + assigned.slot + '</span>' +
                         '<span class="btn-name">' + escapeHtml(info.name) + '</span>' +
                         '<span class="btn-badges">' +
-                            '<span class="badge ' + (info.amp ? 'amp-on' : 'amp-off') + '">AMP</span>' +
-                            '<span class="badge ' + (info.cab ? 'cab-on' : 'cab-off') + '">CAB</span>' +
+                            '<span class="badge ' + getAmpBadgeClass(info.ampOn, info.stompOn) + '">AMP</span>' +
+                            '<span class="badge ' + getCabBadgeClass(info.cabType) + '">CAB</span>' +
                         '</span>';
 
                     btn.classList.remove('empty');
@@ -1235,8 +1277,8 @@
 
             const info = getPresetInfo(editBank, editSlot);
             nameInput.value = info.name;
-            ampCheck.checked = info.amp;
-            cabCheck.checked = info.cab;
+            ampCheck.checked = info.ampOn;
+            cabCheck.checked = (info.cabType === 0 || info.cabType === 1);
 
             editingButtonSlot = { bank: editBank, slot: editSlot, source, buttonIndex };
             overlay.style.display = 'flex';
@@ -1260,8 +1302,9 @@
             const key = getPresetKey(editingButtonSlot.bank, editingButtonSlot.slot);
             state.presets[key] = {
                 name: document.getElementById('edit-name').value || 'Preset',
-                amp: document.getElementById('edit-amp').checked,
-                cab: document.getElementById('edit-cab').checked
+                ampOn: document.getElementById('edit-amp').checked,
+                stompOn: state.presets[key] ? state.presets[key].stompOn : false,
+                cabType: document.getElementById('edit-cab').checked ? 0 : 2
             };
             saveState();
             closeEditModal();
@@ -1489,9 +1532,42 @@
         const REQUEST_STATE_CMD = new Uint8Array([0xb9, 0x03, 0x00, 0x82, 0x06, 0x00, 0x80, 0x10, 0x03, 0xb9, 0x02, 0x81, 0x01, 0x02, 0x10]);
         const NAME_MARKER = new Uint8Array([0xB9, 0x04, 0xB9, 0x02, 0xBC, 0x21]);
         const PARAM_MARKER = new Uint8Array([0xBA, 0x03, 0xBA, 0x6D]);
-        const AMP_ENABLE_INDEX = 17;
-        const CAB_TYPE_INDEX = 22;
+        // These indexes are relative to the first byte after PARAM_MARKER.
+        const AMP_ENABLE_INDEX = 18;
+        const STOMP_INDEX = 19;
+        const CAB_TYPE_INDEX = 24;
         const FLOAT_SIZE = 5;
+        let traceLog = [];
+
+        function buildPresetSelectCommand(index) {
+            if (index < 128) {
+                return new Uint8Array([0xb9, 0x03, 0x81, 0x01, 0x02, 0x82, 0x04, 0x00, 0x80, 0x10, 0x03, 0xb9, 0x02, index, 0x00]);
+            }
+            return new Uint8Array([0xb9, 0x03, 0x81, 0x01, 0x02, 0x82, 0x04, 0x00, 0x80, 0x10, 0x03, 0xb9, 0x02, 0x80, index, 0x00]);
+        }
+
+        async function selectPresetForSync(index) {
+            if (midiOutput) {
+                const channelStatus = 0xB0 + midiChannel;
+                const bank = index > 127 ? 1 : 0;
+                const program = index > 127 ? index - 128 : index;
+                midiOutput.send([channelStatus, 0, bank]);
+                await delay(30);
+                midiOutput.send([0xC0 + midiChannel, program]);
+            } else {
+                await transportSend(buildFrame(buildPresetSelectCommand(index)));
+            }
+
+            await delay(400);
+            for (let attempt = 0; attempt < 3; attempt++) {
+                rxBuffer = [];
+                await transportSend(buildFrame(REQUEST_STATE_CMD));
+                const stateResponse = await readFrame(2000);
+                if (stateResponse && stateResponse.length > 9 && stateResponse[9] === index) return true;
+                await delay(150);
+            }
+            return false;
+        }
 
         function readFloat32(bytes, offset) {
             if (offset + 4 > bytes.length) return null;
@@ -1501,6 +1577,69 @@
             view.setUint8(2, bytes[offset + 2]);
             view.setUint8(3, bytes[offset + 3]);
             return view.getFloat32(0, true);
+        }
+
+        function hexBlock(bytes, offset, count) {
+            const end = Math.min(offset + count, bytes.length);
+            const slice = bytes.slice(offset, end);
+            return Array.from(slice).map(b => b.toString(16).padStart(2, '0')).join(' ');
+        }
+
+        function dumpAllParams(afterParam) {
+            const lines = [];
+            const totalParams = Math.floor(afterParam.length / FLOAT_SIZE);
+            for (let p = 0; p < totalParams; p++) {
+                const off = p * FLOAT_SIZE;
+                if (off + 4 >= afterParam.length) break;
+                if (afterParam[off] === 0x88) {
+                    const val = readFloat32(afterParam, off + 1);
+                    lines.push('  param[' + String(p).padStart(2,'0') + '] offset=' + String(off).padStart(3,'') + ' marker=0x88 float=' + val);
+                } else {
+                    lines.push('  param[' + String(p).padStart(2,'0') + '] offset=' + String(off).padStart(3,'') + ' marker=0x' + afterParam[off].toString(16) + ' <not float>');
+                }
+            }
+            return lines;
+        }
+
+        function readPresetParameter(afterParam, index) {
+            const offset = index * FLOAT_SIZE;
+            if (!afterParam || offset + FLOAT_SIZE > afterParam.length || afterParam[offset] !== 0x88) {
+                return null;
+            }
+            const value = readFloat32(afterParam, offset + 1);
+            return Number.isFinite(value) ? value : null;
+        }
+
+        function decodePresetModules(afterParam) {
+            let firstSeparator = -1;
+            if (afterParam) {
+                for (let i = 0; i < afterParam.length - 1; i++) {
+                    if (afterParam[i] === 0xBA && afterParam[i + 1] === 0x6D) {
+                        firstSeparator = i;
+                        break;
+                    }
+                }
+            }
+            const firstBlock = firstSeparator >= 0 ? afterParam.slice(0, firstSeparator) : afterParam;
+            return {
+                ampVal: readPresetParameter(firstBlock, AMP_ENABLE_INDEX),
+                stompVal: readPresetParameter(firstBlock, STOMP_INDEX),
+                cabVal: readPresetParameter(firstBlock, CAB_TYPE_INDEX)
+            };
+        }
+
+        function getAmpBadgeClass(ampOn, stompOn) {
+            if (!ampOn && !stompOn) return 'amp-off';
+            if (ampOn && !stompOn) return 'amp-orange';
+            if (ampOn && stompOn) return 'amp-green';
+            return 'amp-blue';
+        }
+
+        function getCabBadgeClass(cabType) {
+            if (cabType === 0) return 'cab-orange';
+            if (cabType === 1) return 'cab-green';
+            if (cabType === 2) return 'cab-off';
+            return 'cab-off';
         }
 
         async function syncUSB() {
@@ -1592,6 +1731,7 @@
             rxBuffer = [];
             rxResolve = null;
             transportStartRead();
+            traceLog = [];
 
             try {
                 await delay(500);
@@ -1611,6 +1751,7 @@
                 await transportSend(buildFrame(REQUEST_STATE_CMD));
                 const stateResp = await readFrame(3000);
                 console.log('[SYNC] State response:', stateResp ? bytesToHex(stateResp) : 'null');
+                const initialPreset = stateResp && stateResp.length > 9 ? stateResp[9] : null;
 
                 await delay(200);
                 rxBuffer = [];
@@ -1624,6 +1765,13 @@
 
                     textEl.textContent = (loaded + 1) + ' / ' + total + '...';
                     fillEl.style.width = Math.round(loaded / total * 100) + '%';
+
+                    const selected = await selectPresetForSync(i);
+                    if (!selected) {
+                        traceLog.push('=== Preset ' + i + ' === STATE DID NOT REACH REQUESTED INDEX');
+                        loaded++;
+                        continue;
+                    }
 
                     let presetReq;
                     if (i < 128) {
@@ -1652,31 +1800,43 @@
                                 if (!state.presets[key]) state.presets[key] = {};
                                 state.presets[key].name = name;
 
+                                let ampVal = null, stompVal = null, cabVal = null;
                                 const afterParam = extractAfterMarker(response, PARAM_MARKER);
-                                if (afterParam && afterParam.length >= CAB_TYPE_INDEX * FLOAT_SIZE + 5) {
-                                    const ampOff = AMP_ENABLE_INDEX * FLOAT_SIZE;
-                                    if (afterParam[ampOff] === 0x88) {
-                                        state.presets[key].amp = readFloat32(afterParam, ampOff + 1) > 0.5;
-                                    }
-                                    const cabOff = CAB_TYPE_INDEX * FLOAT_SIZE;
-                                    if (afterParam[cabOff] === 0x88) {
-                                        state.presets[key].cab = readFloat32(afterParam, cabOff + 1) > 0.5;
-                                    }
+                                if (afterParam) {
+                                    traceLog.push('=== Preset ' + i + ' [' + bank + slot + '] "' + name + '" ===');
+                                    traceLog.push('  raw hex (first 130 bytes): ' + hexBlock(afterParam, 0, Math.min(130, afterParam.length)));
+                                    const paramLines = dumpAllParams(afterParam);
+                                    traceLog.push(...paramLines);
+
+                                    ({ ampVal, stompVal, cabVal } = decodePresetModules(afterParam));
+
+                                    traceLog.push('  >> AMP_enable(idx17)=' + ampVal + '  SW1_stomp(idx18)=' + stompVal + '  CAB_type(idx22)=' + cabVal);
+                                    traceLog.push('');
+                                } else {
+                                    traceLog.push('=== Preset ' + i + ' [' + bank + slot + '] "' + name + '" === NO PARAM_MARKER found');
+                                    traceLog.push('');
                                 }
 
-                                if (i < 3) {
-                                    console.log('[SYNC] Preset', i, name, 'AMP:', state.presets[key].amp, 'CAB:', state.presets[key].cab);
-                                }
+                                state.presets[key].ampOn = (ampVal !== null && ampVal > 0.5);
+                                state.presets[key].stompOn = (stompVal !== null && stompVal > 0.5);
+                                state.presets[key].cabType = cabVal !== null ? Math.round(cabVal) : -1;
 
                                 successCount++;
                             }
                         }
                     } else {
-                        console.log('[SYNC] No response for preset', i);
+                        traceLog.push('=== Preset ' + i + ' === NO RESPONSE');
+                        traceLog.push('');
                     }
 
                     loaded++;
                     await delay(50);
+                }
+
+                if (initialPreset !== null && initialPreset < total) {
+                    rxBuffer = [];
+                    await transportSend(buildFrame(buildPresetSelectCommand(initialPreset)));
+                    await delay(250);
                 }
 
                 saveState();
@@ -1684,6 +1844,16 @@
                 renderGrid();
                 textEl.textContent = t('syncDone') + successCount + '/' + total + t('syncPresetsRead');
                 fillEl.style.width = '100%';
+
+                const traceBlob = new Blob([traceLog.join('\n')], { type: 'text/plain' });
+                const traceUrl = URL.createObjectURL(traceBlob);
+                const traceA = document.createElement('a');
+                traceA.href = traceUrl;
+                traceA.download = 'tonex-trace.txt';
+                traceA.textContent = 'Télécharger trace.txt';
+                traceA.style.cssText = 'color:#e94560;margin-left:12px;font-size:0.85em;text-decoration:underline;cursor:pointer;';
+                textEl.parentElement.appendChild(traceA);
+                setTimeout(() => { URL.revokeObjectURL(traceUrl); if (traceA.parentElement) traceA.remove(); }, 60000);
             } catch(e) {
                 console.error('Sync error:', e);
                 textEl.textContent = t('syncError') + e.message;
@@ -1695,6 +1865,260 @@
         }
 
         document.getElementById('syncUSB').addEventListener('click', syncUSB);
+
+        // --- Trace USB (6 presets only: 34A=102 .. 35C=107) ---
+        async function traceUSB() {
+            const syncBtn = document.getElementById('traceUSB');
+            const progressEl = document.getElementById('syncProgress');
+            const fillEl = document.getElementById('syncProgressFill');
+            const textEl = document.getElementById('syncProgressText');
+
+            if (transportIsOpen()) {
+                await transportDisconnect();
+                syncBtn.textContent = '🔍 Trace';
+                progressEl.classList.remove('active');
+                return;
+            }
+
+            useUsb = false;
+            if ('serial' in navigator) {
+                try {
+                    serialPort = await navigator.serial.requestPort();
+                    await serialPort.open({ baudRate: 115200 });
+                } catch(e) {
+                    serialPort = null;
+                }
+            }
+            if (!serialPort && 'usb' in navigator) {
+                try {
+                    let device = null;
+                    try { device = await navigator.usb.requestDevice({ filters: [{ vendorId: 0x1963 }] }); } catch(e) {}
+                    if (!device) try { device = await navigator.usb.requestDevice({ filters: [] }); } catch(e) {}
+                    if (!device) throw new Error('No device selected');
+                    await device.open();
+                    await device.selectConfiguration(1);
+                    let cdcCtrlIface = -1;
+                    let cdcDataIface = -1;
+                    for (const iface of device.configuration.interfaces) {
+                        for (const alt of iface.alternates) {
+                            if (alt.interfaceClass === 0x02) cdcCtrlIface = iface.interfaceNumber;
+                            if (alt.interfaceClass === 0x0A) cdcDataIface = iface.interfaceNumber;
+                        }
+                    }
+                    if (cdcDataIface === -1) {
+                        for (const iface of device.configuration.interfaces) {
+                            for (const alt of iface.alternates) {
+                                if (alt.endpoints.some(e => e.type === 'bulk')) { cdcDataIface = iface.interfaceNumber; break; }
+                            }
+                            if (cdcDataIface !== -1) break;
+                        }
+                    }
+                    if (cdcDataIface === -1) { await device.close(); throw new Error('No CDC data interface'); }
+                    if (cdcCtrlIface !== -1) {
+                        await device.claimInterface(cdcCtrlIface);
+                        await device.controlTransferOut({ requestType: 'class', recipient: 'interface', request: 0x20, value: 0x00, index: cdcCtrlIface }, new Uint8Array([0x00, 0xC2, 0x01, 0x00, 0x00, 0x00, 0x08]));
+                        await device.controlTransferOut({ requestType: 'class', recipient: 'interface', request: 0x22, value: 0x03, index: cdcCtrlIface });
+                    }
+                    await device.claimInterface(cdcDataIface);
+                    const dataAlt = device.configuration.interfaces[cdcDataIface].alternates[0];
+                    for (const ep of dataAlt.endpoints) {
+                        if (ep.direction === 'in' && ep.type === 'bulk') usbEpIn = ep.endpointNumber;
+                        if (ep.direction === 'out' && ep.type === 'bulk') usbEpOut = ep.endpointNumber;
+                    }
+                    usbDevice = device;
+                    useUsb = true;
+                } catch(e) {
+                    alert(t('portError') + e.message);
+                    return;
+                }
+            }
+            if (!serialPort && !useUsb) {
+                alert(t('portError') + ('serial' in navigator ? '' : 'Web Serial unavailable'));
+                return;
+            }
+
+            syncBtn.textContent = '⏹ Stop';
+            progressEl.classList.add('active');
+            textEl.textContent = 'Trace: ouverture port...';
+            fillEl.style.width = '0%';
+
+            rxBuffer = [];
+            rxResolve = null;
+            transportStartRead();
+
+            const PRESETS_TO_TRACE = [102, 103, 104, 105, 106, 107];
+            const LABELS = ['34A', '34B', '34C', '35A', '35B', '35C'];
+            const traceLines = [];
+
+            try {
+                await delay(500);
+                rxBuffer = [];
+
+                textEl.textContent = 'Trace: Hello...';
+                await transportSend(buildFrame(HELLO_CMD));
+                const helloResp = await readFrame(3000);
+                if (!helloResp) throw new Error('Pas de réponse Hello');
+
+                await delay(200);
+                rxBuffer = [];
+
+                textEl.textContent = 'Trace: State...';
+                await transportSend(buildFrame(REQUEST_STATE_CMD));
+                const stateResp = await readFrame(3000);
+                traceLines.push('=== REQUEST_STATE_CMD response (' + (stateResp ? stateResp.length : 0) + ' bytes) ===');
+                if (stateResp) {
+                    traceLines.push('  hex: ' + bytesToHex(stateResp));
+                } else {
+                    traceLines.push('  (no response)');
+                }
+                traceLines.push('');
+
+                await delay(200);
+
+                for (let idx = 0; idx < PRESETS_TO_TRACE.length; idx++) {
+                    if (!transportIsOpen()) break;
+                    const pc = PRESETS_TO_TRACE[idx];
+                    const label = LABELS[idx];
+
+                    textEl.textContent = 'Trace: ' + label + ' (PC ' + pc + ')...';
+                    fillEl.style.width = Math.round((idx / PRESETS_TO_TRACE.length) * 100) + '%';
+
+                    let presetReq;
+                    if (pc < 128) {
+                        presetReq = new Uint8Array([
+                            0xb9, 0x03, 0x81, 0x00, 0x02, 0x82, 0x06, 0x00, 0x80, 0x10, 0x03, 0xb9, 0x04, 0x10, 0x01, pc, 0x00
+                        ]);
+                    } else {
+                        presetReq = new Uint8Array([
+                            0xb9, 0x03, 0x81, 0x00, 0x02, 0x82, 0x06, 0x00, 0x80, 0x10, 0x03, 0xb9, 0x04, 0x10, 0x01, 0x80, pc, 0x00
+                        ]);
+                    }
+
+                    rxBuffer = [];
+                    await transportSend(buildFrame(presetReq));
+                    const response = await readFrame(3000);
+
+                    if (response) {
+                        const afterName = extractAfterMarker(response, NAME_MARKER);
+                        const name = afterName ? decodePresetName(afterName.slice(0, 32)) : '???';
+
+                        const afterParam = extractAfterMarker(response, PARAM_MARKER);
+
+                        traceLines.push('=== ' + label + ' (PC ' + pc + ') "' + name + '" ===');
+                        traceLines.push('  payload hex (' + response.length + ' bytes): ' + bytesToHex(response));
+                        traceLines.push('');
+
+                        // Also extract the ba 02 section (before PARAM_MARKER)
+                        const ba02Marker = new Uint8Array([0xBA, 0x02]);
+                        const afterBa02 = extractAfterMarker(response, ba02Marker);
+                        if (afterBa02) {
+                            traceLines.push('  BA 02 section (' + afterBa02.length + ' bytes):');
+                            traceLines.push('  hex: ' + bytesToHex(afterBa02.slice(0, 40)));
+                            const ba02Params = Math.floor(Math.min(afterBa02.length, 30) / FLOAT_SIZE);
+                            for (let p = 0; p < ba02Params; p++) {
+                                const off = p * FLOAT_SIZE;
+                                if (off + 4 >= afterBa02.length) break;
+                                if (afterBa02[off] === 0x88) {
+                                    const val = readFloat32(afterBa02, off + 1);
+                                    traceLines.push('    ba02[' + p + '] 0x88 ' + val);
+                                }
+                            }
+                            traceLines.push('');
+                        }
+
+                        if (afterParam) {
+                            traceLines.push('  PARAM section (' + afterParam.length + ' bytes after marker):');
+
+                            // Split at ba 6d separators to find individual blocks
+                            const separators = [];
+                            for (let i = 0; i <= afterParam.length - 2; i++) {
+                                if (afterParam[i] === 0xba && afterParam[i + 1] === 0x6d) {
+                                    separators.push(i);
+                                }
+                            }
+                            traceLines.push('  ba 6d separators at byte offsets: ' + separators.join(', '));
+
+                            // Split into segments
+                            const segments = [];
+                            let segStart = 0;
+                            for (const sep of separators) {
+                                if (sep > segStart) segments.push(afterParam.slice(segStart, sep));
+                                segStart = sep + 2;
+                            }
+                            if (segStart < afterParam.length) segments.push(afterParam.slice(segStart));
+
+                            // Filter: only segments starting with 0x88 are param blocks
+                            const paramBlocks = segments.filter(s => s.length > 0 && s[0] === 0x88);
+                            traceLines.push('  Found ' + paramBlocks.length + ' param blocks (from ' + segments.length + ' segments)');
+                            traceLines.push('');
+
+                            for (let b = 0; b < paramBlocks.length; b++) {
+                                const block = paramBlocks[b];
+                                const blockParams = Math.floor(block.length / FLOAT_SIZE);
+                                traceLines.push('  --- BLOCK ' + (b + 1) + ' (' + block.length + ' bytes, ' + blockParams + ' params) ---');
+                                const showAll = (b === 0);
+                                const limit = showAll ? blockParams : Math.min(blockParams, 30);
+                                for (let p = 0; p < limit; p++) {
+                                    const off = p * FLOAT_SIZE;
+                                    if (off + 4 >= block.length) break;
+                                    const m = block[off];
+                                    if (m === 0x88) {
+                                        const val = readFloat32(block, off + 1);
+                                        const tag = (p === AMP_ENABLE_INDEX) ? ' << AMP_ENABLE' : (p === STOMP_INDEX) ? ' << STOMP_SW1' : (p === CAB_TYPE_INDEX) ? ' << CAB_TYPE' : '';
+                                        traceLines.push('    [' + String(p).padStart(2, '0') + '] 0x88 ' + val + tag);
+                                    } else {
+                                        traceLines.push('    [' + String(p).padStart(2, '0') + '] 0x' + m.toString(16).padStart(2, '0') + ' <not 0x88>');
+                                    }
+                                }
+                                if (!showAll && blockParams > 30) {
+                                    traceLines.push('    ... (' + (blockParams - 30) + ' more params)');
+                                }
+                                traceLines.push('');
+                            }
+
+                            // Also dump raw hex of first 200 bytes for visual comparison
+                            traceLines.push('  --- Raw hex (first 300 bytes of PARAM section) ---');
+                            traceLines.push('  ' + bytesToHex(afterParam.slice(0, 300)));
+                        } else {
+                            traceLines.push('  ** NO PARAM_MARKER found **');
+                            traceLines.push('  full payload hex: ' + bytesToHex(response));
+                        }
+                        traceLines.push('');
+                    } else {
+                        traceLines.push('=== ' + label + ' (PC ' + pc + ') === NO RESPONSE');
+                        traceLines.push('');
+                    }
+
+                    await delay(100);
+                }
+
+                fillEl.style.width = '100%';
+                textEl.textContent = 'Trace terminée - ' + traceLines.length + ' lignes';
+
+                const traceContent = traceLines.join('\n');
+                console.log('[TRACE]\\n' + traceContent);
+
+                const blob = new Blob([traceContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'tonex-trace-34-35.txt';
+                a.textContent = '⬇ Télécharger tonex-trace-34-35.txt';
+                a.style.cssText = 'color:#e94560;margin-left:12px;font-size:0.85em;text-decoration:underline;cursor:pointer;';
+                textEl.parentElement.appendChild(a);
+                setTimeout(() => { URL.revokeObjectURL(url); if (a.parentElement) a.remove(); }, 120000);
+
+            } catch(e) {
+                console.error('Trace error:', e);
+                textEl.textContent = 'Erreur: ' + e.message;
+            } finally {
+                await transportDisconnect();
+                syncBtn.textContent = '🔍 Trace';
+                setTimeout(() => progressEl.classList.remove('active'), 5000);
+            }
+        }
+
+        document.getElementById('traceUSB').addEventListener('click', traceUSB);
 
         // --- Export / Import JSON ---
         document.getElementById('exportJSON').addEventListener('click', () => {
