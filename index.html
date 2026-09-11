@@ -1129,16 +1129,10 @@
             const midiCh = 0xB0 + ch;
 
             if (midiOutput.isBLE) {
-                let bankVal, pcVal;
-                if (pc <= 127) {
-                    bankVal = 0;
-                    pcVal = pc;
-                } else {
-                    bankVal = 1;
-                    pcVal = pc - 128;
-                }
-                const packet = [midiCh, 0, bankVal, 0xC0 + ch, pcVal];
-                bleDebug('SEND: pkt=' + packet.map(b => '0x' + b.toString(16).padStart(2,'0')).join(' '));
+                const bankVal = pc > 127 ? 1 : 0;
+                const pcVal = pc > 127 ? pc - 128 : pc;
+                const packet = [0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal];
+                bleDebug('SEND: ' + packet.map(b => '0x' + b.toString(16).padStart(2,'0')).join(' '));
                 await midiOutput.send(packet);
             } else {
                 if (pc > 127) {
@@ -1298,7 +1292,7 @@
                                 isBLE: true,
                                 send: async function(data) {
                                     if (!bleMidiCharacteristic) return;
-                                    try { await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array([0x80, ...data])); } catch(e) {}
+                                    try { await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array(data)); } catch(e) {}
                                 }
                             };
 
