@@ -1318,31 +1318,47 @@
                             };
 
                             const testBtn = document.getElementById('ble-test-btn');
-                            testBtn.style.display = 'block';
-                            testBtn.onclick = async () => {
-                                if (!bleMidiCharacteristic) return;
-                                bleDebug('--- TEST FORMATS ---');
-                                const formats = [
-                                    { name: 'Standard BLE MIDI [80 00 C0 01]', data: [0x80, 0x00, 0xC0, 0x01] },
-                                    { name: 'Raw MIDI only [C0 01]', data: [0xC0, 0x01] },
-                                    { name: 'Header 80 [80 C0 01]', data: [0x80, 0xC0, 0x01] },
-                                    { name: 'Header 00 [00 C0 01]', data: [0x00, 0xC0, 0x01] },
-                                    { name: 'Full BLE MIDI [80 00 B0 00 00 80 00 C0 02]', data: [0x80, 0x00, 0xB0, 0x00, 0x00, 0x80, 0x00, 0xC0, 0x02] },
-                                    { name: 'Raw Bank+PC [B0 00 00 C0 02]', data: [0xB0, 0x00, 0x00, 0xC0, 0x02] },
-                                    { name: 'Header 80 Bank+PC [80 B0 00 00 80 C0 03]', data: [0x80, 0xB0, 0x00, 0x00, 0x80, 0xC0, 0x03] },
-                                ];
-                                for (const t of formats) {
-                                    bleDebug('TEST: ' + t.name);
+                            testBtn.style.display = 'none';
+
+                            const testDiv = document.createElement('div');
+                            testDiv.style.cssText = 'margin-top:12px;border-top:1px solid #3a3a3a;padding-top:12px;';
+                            testDiv.innerHTML = '<p style="color:#e67e22;font-size:0.85em;margin-bottom:8px;"><strong>Tests MIDI :</strong></p>';
+
+                            const formats = [
+                                { name: '① Standard [80 00 C0 01]', data: [0x80, 0x00, 0xC0, 0x01] },
+                                { name: '② Raw [C0 01]', data: [0xC0, 0x01] },
+                                { name: '③ Header 80 [80 C0 01]', data: [0x80, 0xC0, 0x01] },
+                                { name: '④ Header 00 [00 C0 01]', data: [0x00, 0xC0, 0x01] },
+                                { name: '⑤ Bank+PC BLE [80 00 B0 00 00 80 00 C0 02]', data: [0x80, 0x00, 0xB0, 0x00, 0x00, 0x80, 0x00, 0xC0, 0x02] },
+                                { name: '⑥ Bank+PC Raw [B0 00 00 C0 02]', data: [0xB0, 0x00, 0x00, 0xC0, 0x02] },
+                                { name: '⑦ Bank+PC 80 [80 B0 00 00 80 C0 03]', data: [0x80, 0xB0, 0x00, 0x00, 0x80, 0xC0, 0x03] },
+                            ];
+
+                            for (let i = 0; i < formats.length; i++) {
+                                const f = formats[i];
+                                const btn = document.createElement('button');
+                                btn.className = 'btn-save';
+                                btn.style.cssText = 'width:100%;margin:3px 0;font-size:0.8em;';
+                                btn.textContent = f.name;
+                                btn.addEventListener('click', async () => {
+                                    if (!bleMidiCharacteristic) return;
+                                    btn.textContent = f.name + ' ...';
                                     try {
-                                        await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array(t.data));
-                                        bleDebug('  → OK');
+                                        await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array(f.data));
+                                        btn.textContent = f.name + ' ✓ OK';
+                                        btn.style.background = '#4caf50';
                                     } catch(e) {
-                                        bleDebug('  → ERR: ' + e.message);
+                                        btn.textContent = f.name + ' ✗ ERR';
+                                        btn.style.background = '#e74c3c';
                                     }
-                                    await new Promise(r => setTimeout(r, 300));
-                                }
-                                bleDebug('--- FIN ---');
-                            };
+                                    setTimeout(() => {
+                                        btn.textContent = f.name;
+                                        btn.style.background = '';
+                                    }, 2000);
+                                });
+                                testDiv.appendChild(btn);
+                            }
+                            deviceList.appendChild(testDiv);
 
                             updateMIDIStatus(true);
                             state.midi.device = midiOutput.name;
