@@ -1131,16 +1131,13 @@
             if (midiOutput.isBLE) {
                 if (pc <= 127) {
                     const packet = [0x80, midiCh, 0, 0, 0x80, 0xC0 + ch, pc];
-                    bleDebug('SEND: pc=' + pc + ' pkt=' + packet.map(b => '0x' + b.toString(16).padStart(2,'0')).join(' '));
+                    bleDebug('SEND: pc=' + pc);
                     await midiOutput.send(packet);
                 } else {
-                    const ccPacket = [0x80, midiCh, 0, 1];
-                    bleDebug('SEND: CC#0=1 pkt=' + ccPacket.map(b => '0x' + b.toString(16).padStart(2,'0')).join(' '));
-                    await midiOutput.send(ccPacket);
-                    await new Promise(r => setTimeout(r, 20));
-                    const pcPacket = [0x80, 0xC0 + ch, pc - 128];
-                    bleDebug('SEND: PC=' + (pc-128) + ' pkt=' + pcPacket.map(b => '0x' + b.toString(16).padStart(2,'0')).join(' '));
-                    await midiOutput.send(pcPacket);
+                    bleDebug('SEND: Bank 1, PC=' + (pc - 128));
+                    await midiOutput.send([0x80, midiCh, 0, 1]);
+                    await new Promise(r => setTimeout(r, 50));
+                    await midiOutput.send([0x80, 0xC0 + ch, pc - 128]);
                 }
             } else {
                 if (pc > 127) {
