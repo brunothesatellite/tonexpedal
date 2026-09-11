@@ -311,6 +311,7 @@
         <li><strong data-t="feat-lib">Bibliothèque complète</strong> <span data-t="feat-lib-desc">des 150 presets (50 banks × 3 slots A/B/C)</span></li>
         <li><strong data-t="feat-sync">Synchronisation USB</strong> — <span data-t="feat-sync-desc">lecture de tous les noms via USB CDC série</span></li>
         <li><strong data-t="feat-midi">Contrôle MIDI</strong> — <span data-t="feat-midi-desc">Bank Select + Program Change pour changer de preset</span></li>
+        <li><strong data-t="feat-ble-midi">Contrôle BLE MIDI</strong> — <span data-t="feat-ble-midi-desc">route Web Bluetooth expérimentale pour la même sélection logique de preset, avec service GATT et caractéristique dédiée</span></li>
         <li><strong data-t="feat-drag">Glisser-déposer</strong> — <span data-t="feat-drag-desc">assigner, swap, supprimer via corbeille</span></li>
         <li><strong data-t="feat-edit">Édition</strong> — <span data-t="feat-edit-desc">double-clic pour renommer</span></li>
         <li><strong data-t="feat-search">Recherche</strong> <span data-t="feat-search-desc">filtrante dans la bibliothèque</span></li>
@@ -323,14 +324,19 @@
     <h2 id="h-prereq">Prérequis</h2>
     <table>
         <tr><th data-t="th-component">Composant</th><th data-t="th-version">Version requise</th></tr>
-        <tr><td data-t="prereq-browser">Navigateur</td><td data-t="prereq-browser-val">Chrome 89+ ou Edge 89+ (Web MIDI + Web Serial)</td></tr>
+        <tr><td data-t="prereq-browser">Navigateur</td><td data-t="prereq-browser-val">Chrome 89+ ou Edge 89+ (Web MIDI + Web Serial + Web Bluetooth BLE MIDI)</td></tr>
         <tr><td data-t="prereq-os">Système</td><td data-t="prereq-os-val">Windows 10/11, Android (via WebUSB)</td></tr>
         <tr><td data-t="prereq-pedal">Pédalier</td><td>IK Multimedia TONEX Pedal (full size)</td></tr>
         <tr><td data-t="prereq-cable">Câble</td><td data-t="prereq-cable-val">USB-C connecté au port USB du pédalier</td></tr>
+        <tr><td data-t="prereq-ble">BLE MIDI</td><td data-t="prereq-ble-val">service GATT <code>03b80e5a-ede8-4b33-a751-6ce34ec4c700</code>, caractéristique <code>7772e5db-3868-4112-a1a9-f2669d106bf3</code></td></tr>
     </table>
 
     <div class="warning">
         <strong data-t="warn-title">Important :</strong> <span data-t="warn-text">L'API Web Serial nécessite <strong>HTTPS</strong> ou <strong>localhost</strong>. Un simple <code>file://</code> ne fonctionnera pas pour le MIDI et le USB. Sur Android, le fallback WebUSB s'active automatiquement.</span>
+    </div>
+
+    <div class="info">
+        <strong>BLE MIDI :</strong> <span data-t="ble-warning">Le transport BLE est expérimental. Il peut se déconnecter rapidement sur certains PC/navigateurs et ne garantit pas encore la bonne sélection des presets <code>42C..49C</code> (<code>pc = 128..149</code>). Il reste une route de contrôle parallèle, non stable et documentée comme connue incomplète.</span>
     </div>
 
     <h2 id="h-install">Installation</h2>
@@ -355,10 +361,14 @@ python -m http.server 3000</code></pre>
     <ol>
         <li data-t="usage-midi-1">Brancher le TONEX Pedal en USB</li>
         <li data-t="usage-midi-2">Ouvrir l'application dans Chrome/Edge</li>
-        <li data-t="usage-midi-3">Sélectionner le device MIDI dans le menu <strong>Device</strong></li>
+        <li data-t="usage-midi-3">Sélectionner le device USB-MIDI dans le menu <strong>Device</strong>, ou lancer la découverte Web Bluetooth si le transport BLE est choisi</li>
         <li data-t="usage-midi-4">Choisir le canal MIDI (défaut : Ch 1)</li>
         <li data-t="usage-midi-5">Le statut passe à <strong style="color:#4caf50">Connecté</strong></li>
     </ol>
+
+    <div class="warning">
+        <strong>Transport BLE :</strong> la route Web Bluetooth est un canal GATT distinct du flux USB-MIDI. Elle réalise une emission BLE de la même abstraction logique `bank/slot` et de la même sémantique de Bank Select + Program Change, mais les presets `42C..49C` (`pc = 128..149`) ne sont pas encore routés correctement dans le flux BLE. Les observations documentent une chute ou un renvoi sur `00A` ou sur un offset inadapté.
+    </div>
 
     <h3 data-t="usage-sync-title">Synchronisation USB</h3>
     <ol>
@@ -438,6 +448,29 @@ Program Change: [0xC0 + channel, PC]             // PC = 0–127</code></pre>
     <pre><code>pc = bank × 3 + slotIndex    // slotIndex: A=0, B=1, C=2
 bank = Math.floor(pc / 3)
 slot = ['A', 'B', 'C'][pc % 3]</code></pre>
+
+    <h3 data-t="ble-transport-title">Transport BLE MIDI — architecture précise</h3>
+    <pre><code>Service GATT: 03b80e5a-ede8-4b33-a751-6ce34ec4c700
+Char. MIDI:   7772e5db-3868-4112-a1a9-f2669d106bf3
+Packet shape: [0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal]
+
+USB style semantics:
+  PC 0..127  → CC#0 = 0, PC = PC
+  PC 128..149 → CC#0 = 1, PC = PC - 128
+
+BLE-only historical note:
+  when validation attempts observed a working upper-bank behavior,
+  the payload shape was projected through a channel-local GATT packet
+  and recomposed with the same bank/slot and PC reinterpretation
+  required by the pedal. The route remains experimental.
+</code></pre>
+
+    <h3 data-t="ble-transport-status">Différence USB vs BLE MIDI</h3>
+    <ul>
+        <li><strong>USB-MIDI :</strong> Web MIDI → USB-MIDI class endpoint → Bank Select + Program Change</li>
+        <li><strong>BLE MIDI :</strong> Web Bluetooth → GATT service/characteristic → MIDI packet envelope → same logical preset mapping</li>
+        <li><strong>Remarque :</strong> la couche BLE n’est pas un autre endpoint USB ; c’est une route distincte de la couche de transport Web transport.</li>
+    </ul>
 
     <h2 data-t="h-serial-proto">Protocole USB CDC Série</h2>
 
@@ -558,6 +591,14 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
     <table>
         <tr><th data-t="th-problem">Problème</th><th data-t="th-solution">Solution</th></tr>
         <tr><td data-t="ts-no-midi">Aucun device MIDI</td><td data-t="ts-no-midi-sol">Vérifier le branchement USB. <code>chrome://midi-devices</code></td></tr>
+
+    <h2 data-t="h-known-bugs">Bugs connus et limites</h2>
+    <div class="warning">
+        <strong>BLE MIDI expérimental :</strong> la couche Web Bluetooth est expérimentale. Elle peut se déconnecter rapidement après une ou plusieurs écritures, le symptôme pouvant être lié au PC local ou à la pile GATT du navigateur. Cette limitation doit être documentée comme un bug connu d’infrastructure, pas comme un comportement attendu.
+    </div>
+    <div class="warning">
+        <strong>42C+ BLE :</strong> les presets de la plage <code>42C..49C</code> (<code>pc = 128..149</code>) ne sont pas encore routés correctement par le flux BLE. Les observations font remonter la séquence à <code>00A</code> ou à la mauvaise pair bank/slot sur le pédalier. Le BLE MIDI « haut bank » n’est pas encore fonctionnel.
+    </div>
         <tr><td data-t="ts-no-serial">Web Serial indisponible</td><td data-t="ts-no-serial-sol">Chrome 89+ ou Edge 89+. Vérifier HTTPS/localhost</td></tr>
         <tr><td data-t="ts-sync-fail">Sync USB échoue</td><td data-t="ts-sync-fail-sol">Fermer IK Tonex et tout logiciel utilisant le port série</td></tr>
         <tr><td data-t="ts-no-names">Noms ne s'affichent pas</td><td data-t="ts-no-names-sol">Relancer Sync USB. Console F12 pour erreurs</td></tr>

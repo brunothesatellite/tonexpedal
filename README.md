@@ -1,6 +1,6 @@
 # TONEX Pedal Controller
 
-Single-page web controller for the IK Multimedia TONEX Pedal. Manages presets via USB MIDI and reads names/configurations directly from the pedal via the USB CDC serial interface.
+Single-page web controller for the IK Multimedia TONEX Pedal. Manages presets via USB MIDI and BLE MIDI, and reads names/configurations directly from the pedal via the USB CDC serial interface.
 
 Computer:
 ![Interface PC](captures/tnx1.png)
@@ -23,6 +23,7 @@ Android demo vido:
 - **Full library** of 150 presets (50 banks × 3 slots A/B/C)
 - **USB Sync** — reads all names directly from the pedal
 - **MIDI Control** — sends Bank Select + Program Change to change presets
+- **BLE MIDI Control** — experimental Web Bluetooth route for the same preset mapping path, using a custom GATT service/characteristic and the same Bank Select + Program Change semantics when the BLE packet is accepted by the pedal
 - **Drag & drop** — assign a preset to a button, swap between buttons, or delete via trash
 - **Editing** — double-click to rename a preset
 - **Search** — filtering in the library
@@ -36,12 +37,15 @@ Android demo vido:
 
 | Component | Required version |
 |-----------|-----------------|
-| Browser | Chrome 89+ or Edge 89+ (Web MIDI + Web Serial API) |
+| Browser | Chrome 89+ or Edge 89+ (Web MIDI + Web Serial API + Web Bluetooth BLE MIDI support) |
 | OS | Windows 10/11, Android (via WebUSB) |
 | Pedal | IK Multimedia TONEX Pedal (full size) |
 | Cable | USB-C connected to the pedal's USB port |
+| BLE | BLE MIDI requires a secure origin such as localhost/HTTPS and a Web Bluetooth-enabled device/browser. The selected device must expose the known service UUID `03b80e5a-ede8-4b33-a751-6ce34ec4c700` and characteristic `7772e5db-3868-4112-a1a9-f2669d106bf3` |
 
 > **Note**: On Android, Web Serial is not available — the app falls back to WebUSB for USB CDC communication. MIDI is not available on Android (no Web MIDI API).
+>
+> **Experimental BLE note**: BLE MIDI is an experimental transport branch. It can disconnect rapidly on some hosts or browsers and should not be considered fully robust. In the current implementation the BLE branch is intentionally isolated from the USB/Web Serial path and is documented as an experimental control route for the same preset mapping model.
 
 ## Installation
 
@@ -71,11 +75,20 @@ Simply double-click `index.html` or open it via `file:///` in your browser.
 
 ### MIDI Connection
 
+The application supports two distinct preset-control transports:
+
+1. **USB MIDI / Web MIDI**: a classic Web MIDI route over the pedal's USB-MIDI class device. It remains the default and most stable transport for Bank Select + Program Change.
+2. **BLE MIDI**: an experimental Web Bluetooth route that scans for a TONEX-compatible GATT service using the registered MIDI characteristic. It mirrors the same Bank Select + Program Change model, but it is not wired to the same data flow as the USB transport and is intentionally treated as an experimental branch.
+
+The BLE route is selected by the application from the device picker in the same UI and it emits the same logical Bank Select + Program Change semantics as the USB MIDI branch, but the underlying packet frame is a BLE GATT write wrapped in the custom MIDI packet assembly used by the app.
+
 1. Connect the TONEX Pedal via USB
 2. Open the app in Chrome/Edge
-3. Select the MIDI device in the **Device** dropdown
+3. Select the MIDI device in the **Device** dropdown, or run the BLE search flow if the device is advertised through Web Bluetooth
 4. Choose the MIDI channel (default: Ch 1)
 5. Status changes to **Connected** (green dot)
+
+> **BLE MIDI support note**: the BLE route is experimental and may disconnect rapidly on some host hardware or browser state. On the current branch it also remains a known limitation that the upper preset window `42C..49C` (`pc = 128..149`) does not yet map reliably. It can fall back to the `00A` range or the wrong bank/slot selection on the pedal. The BLE route for `>= 42C` is therefore documented as incomplete and non-stable.
 
 ### USB Sync (reading presets)
 
@@ -162,8 +175,48 @@ Program Change: [0xC0 + channel, PC]
 ### USB CDC Serial Protocol (HDLC)
 
 The pedal exposes two USB interfaces:
-- **USB-MIDI** — for Bank Select / Program Change
+- **USB-MIDI** — for Bank Select / Program Change over Web MIDI / USB-MIDI transport
 - **USB CDC** — for serial communication (reading presets, parameters)
+
+### BLE MIDI transport — architecture and packet framing
+
+The BLE path is deliberately separated from the USB path and is therefore an additional transport that the app can discover through `navigator.bluetooth.requestDevice()` and a device filter for the BLE service `03b80e5a-ede8-4b33-a751-6ce34ec4c700` and characteristic `7772e5db-3868-4112-a1a9-f2669d106bf3`.
+
+The application uses the same high-level preset abstraction (`bank` and `slot`) and converts it to a `pc` number through the classic formula:
+
+```
+pc = bank × 3 + slotIndex
+```
+
+For the USB / Web MIDI flow, the transport semantics are:
+
+```
+[0xB0 + channel, 0x00, 0]  -> CC#0 Bank Select for the first bank
+[0xC0 + channel, PC]      -> Program Change payload
+```
+
+For the BLE transport the code assembles a consolidated packet and supports a BLE-specific circuit in the same `bankSelectAndPC(bank, slot)` path:
+
+```
+[0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal]
+```
+
+where:
+
+- `midiCh = 0xB0 + channel`
+- `bankVal = 0` for the first bank window (`pc = 0..127`)
+- `bankVal = 1` only for the upper-bank USB-style window when the range is treated as a continuation through `pc = 128..149`
+- `pcVal = pc` for `0..127`
+- `pcVal = pc - 128` for the upper bank `128..149`
+
+This is the BLE packet assembly used by the codebase. It is intentionally not identical to the USB-MIDI `CC#0`/`PC` separate writes because the BLE service performs write-through as a GATT characteristic call and expects the payload to be a serialized MIDI stream.
+
+The transport distinction is therefore:
+
+- **USB-MIDI path**: Browser Web MIDI -> USB-MIDI device -> TONEX Pedal
+- **BLE MIDI path**: Browser Web Bluetooth -> custom GATT service/characteristic -> TONEX Pedal
+
+The BLE route is not a second USB device interface. It is a separate GATT channel that carries the same logical MIDI message but routes through a different public API and a different packet envelope.
 
 #### HDLC Frame
 
@@ -257,6 +310,14 @@ Everything is saved in `localStorage` under the key `tonex-state`:
 | AMP/CAB always grey | Check console for correct float32 values (log for first 3 presets) |
 | Blank page after load | Reload the page, localStorage may be corrupted |
 | Android: Sync doesn't read data | WebUSB fallback should auto-activate. Check console for interface/endpoint logs |
+
+## Known bugs and transport limitations
+
+The current BLE MIDI branch is experimental and should be considered unstable. This project documents the following limitations explicitly:
+
+- **BLE MIDI may disconnect quickly**: the BLE MIDI channel can appear to disconnect unexpectedly after one or a few writes. This can be caused by host/browser power management, GATT disconnection, or by the local PC/BLE stack. It should not be interpreted as a stable transport yet.
+- **Preset range `42C..49C` (`pc = 128..149`) is not yet implemented reliably**: the BLE route has been observed to fall back to `00A` or a mismatched bank/slot route when the preset index is above the first bank span. The range `pc >= 128` is therefore documented as currently unreliable for BLE and must not be treated as a stable production route.
+- **USB/Web MIDI remains the stable reference**: the USB path and the serial sync remain the fully documented and intentionally trusted routes. BLE is only an experimental companion route for preset control.
 
 ## Credits
 
