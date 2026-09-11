@@ -306,7 +306,8 @@
 
     <h2 id="h-features">Fonctionnalités</h2>
     <ul id="features-list">
-        <li><strong data-t="feat-grid">Grille 3×3</strong> <span data-t="feat-grid-desc">de presets assignables avec noms</span></li>
+        <li><strong data-t="feat-grid">Grille 3×3</strong> <span data-t="feat-grid-desc">de presets assignables avec noms et couleurs</span></li>
+        <li><strong data-t="feat-colors">Couleurs LED</strong> — <span data-t="feat-colors-desc">9 couleurs assignables par tuile (rouge, vert, ambre, jaune, cyan, bleu, rose, violet, blanc)</span></li>
         <li><strong data-t="feat-lib">Bibliothèque complète</strong> <span data-t="feat-lib-desc">des 150 presets (50 banks × 3 slots A/B/C)</span></li>
         <li><strong data-t="feat-sync">Synchronisation USB</strong> — <span data-t="feat-sync-desc">lecture de tous les noms via USB CDC série</span></li>
         <li><strong data-t="feat-midi">Contrôle MIDI</strong> — <span data-t="feat-midi-desc">Bank Select + Program Change pour changer de preset</span></li>
@@ -314,7 +315,7 @@
         <li><strong data-t="feat-edit">Édition</strong> — <span data-t="feat-edit-desc">double-clic pour renommer</span></li>
         <li><strong data-t="feat-search">Recherche</strong> <span data-t="feat-search-desc">filtrante dans la bibliothèque</span></li>
         <li><strong data-t="feat-persist">Persistance</strong> — <span data-t="feat-persist-desc">configuration sauvegardée en localStorage</span></li>
-        <li><strong data-t="feat-export">Export/Import JSON</strong> — <span data-t="feat-export-desc">exporte les noms de presets vers un fichier, importe sur une autre config</span></li>
+        <li><strong data-t="feat-export">Export/Import JSON</strong> — <span data-t="feat-export-desc">exporte noms, assignations et couleurs, importe sur une autre config</span></li>
         <li><strong data-t="feat-toggle">Bascule bibliothèque</strong> — <span data-t="feat-toggle-desc">chevron discret pour minimiser/étendre la bibliothèque de presets</span></li>
         <li><strong data-t="feat-android">Support Android</strong> — <span data-t="feat-android-desc">fonctionne sur Android Chrome via fallback WebUSB</span></li>
     </ul>
@@ -546,6 +547,10 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
   "presets": {
     "0_A": { "name": "Trooper - 80s Pack", "amp": true, "cab": false },
     "0_B": { "name": "80s Lead - 80s Pack", "amp": true, "cab": true }
+  },
+  "colors": {
+    "0": "red",
+    "4": "blue"
   }
 }</code></pre>
 
@@ -582,7 +587,8 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'cap-fig-android': 'Interface complète — Android',
             'cap-fig-videos': 'Démonstrations vidéo — PC & Android',
             'h-features': 'Fonctionnalités',
-            'feat-grid': 'Grille 3×3', 'feat-grid-desc': 'de presets assignables avec noms',
+            'feat-grid': 'Grille 3×3', 'feat-grid-desc': 'de presets assignables avec noms et couleurs',
+            'feat-colors': 'Couleurs LED', 'feat-colors-desc': '9 couleurs assignables par tuile (rouge, vert, ambre, jaune, cyan, bleu, rose, violet, blanc)',
             'feat-lib': 'Bibliothèque complète', 'feat-lib-desc': 'des 150 presets (50 banks × 3 slots A/B/C)',
             'feat-sync': 'Synchronisation USB', 'feat-sync-desc': 'lecture de tous les noms via USB CDC série',
             'feat-midi': 'Contrôle MIDI', 'feat-midi-desc': 'Bank Select + Program Change pour changer de preset',
@@ -590,7 +596,7 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'feat-edit': 'Édition', 'feat-edit-desc': 'double-clic pour renommer',
             'feat-search': 'Recherche', 'feat-search-desc': 'filtrante dans la bibliothèque',
             'feat-persist': 'Persistance', 'feat-persist-desc': 'configuration sauvegardée en localStorage',
-            'feat-export': 'Export/Import JSON', 'feat-export-desc': 'exporte les noms de presets vers un fichier, importe sur une autre config',
+            'feat-export': 'Export/Import JSON', 'feat-export-desc': 'exporte noms, assignations et couleurs, importe sur une autre config',
             'feat-toggle': 'Bascule bibliothèque', 'feat-toggle-desc': 'chevron discret pour minimiser/étendre la bibliothèque de presets',
             'feat-android': 'Support Android', 'feat-android-desc': 'fonctionne sur Android Chrome via fallback WebUSB',
             'h-prereq': 'Prérequis',
@@ -697,7 +703,8 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'cap-fig-android': 'Full interface — Android',
             'cap-fig-videos': 'Video demonstrations — PC & Android',
             'h-features': 'Features',
-            'feat-grid': '3×3 Grid', 'feat-grid-desc': 'of assignable presets with names',
+            'feat-grid': '3×3 Grid', 'feat-grid-desc': 'of assignable presets with names and colors',
+            'feat-colors': 'LED Colors', 'feat-colors-desc': '9 assignable colors per tile (red, green, amber, yellow, cyan, blue, pink, purple, white)',
             'feat-lib': 'Full library', 'feat-lib-desc': 'of 150 presets (50 banks × 3 slots A/B/C)',
             'feat-sync': 'USB Sync', 'feat-sync-desc': 'reads all names via USB CDC serial',
             'feat-midi': 'MIDI Control', 'feat-midi-desc': 'Bank Select + Program Change to change presets',
@@ -705,7 +712,7 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'feat-edit': 'Editing', 'feat-edit-desc': 'double-click to rename',
             'feat-search': 'Search', 'feat-search-desc': 'filtering in the library',
             'feat-persist': 'Persistence', 'feat-persist-desc': 'configuration saved in localStorage',
-            'feat-export': 'Export/Import JSON', 'feat-export-desc': 'export preset names to a file, import on another setup',
+            'feat-export': 'Export/Import JSON', 'feat-export-desc': 'export names, assignments and colors, import on another setup',
             'feat-toggle': 'Library toggle', 'feat-toggle-desc': 'discreet chevron to minimize/expand the preset library',
             'feat-android': 'Android support', 'feat-android-desc': 'works on Android Chrome via WebUSB fallback',
             'h-prereq': 'Prerequisites',

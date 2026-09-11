@@ -19,16 +19,17 @@ Android demo vido:
 ## Features
 
 - **3×3 Grid** of assignable presets with names
+- **Preset colors** — assign one of 9 LED colors (red, green, amber, yellow, cyan, blue, pink, purple, white) to each tile
 - **Full library** of 150 presets (50 banks × 3 slots A/B/C)
 - **USB Sync** — reads all names directly from the pedal
 - **MIDI Control** — sends Bank Select + Program Change to change presets
 - **Drag & drop** — assign a preset to a button, swap between buttons, or delete via trash
-- **Editing** — double-click to rename a preset and toggle AMP/CAB
+- **Editing** — double-click to rename a preset
 - **Search** — filtering in the library
 - **Persistence** — configuration saved in localStorage
 - **Responsive** — adaptive text via `container-type: inline-size` + `cqi` units
 - **Library toggle** — discreet chevron to minimize/expand the preset library
-- **Export/Import JSON** — export preset names to a file, import them on another setup
+- **Export/Import JSON** — export preset names, grid assignments and colors to a file, import on another setup
 - **Android support** — works on Android Chrome via WebUSB fallback (Web Serial not available on Android)
 
 ## Prerequisites
@@ -86,15 +87,27 @@ Simply double-click `index.html` or open it via `file:///` in your browser.
 
 ### Export / Import JSON
 
-- Click **⬇ JSON** to download all preset names as `tonex-presets.json`
-- Click **⬆ JSON** to import a previously exported file (validates format, replaces names)
+- Click **⬇ JSON** to download preset names, grid assignments and colors as `tonex-config.json`
+- Click **⬆ JSON** to import a previously exported file
+  - **Old format** (preset names only): imports names directly
+  - **New format** (v2 with grid config): prompts whether to restore grid assignments and colors
 
-JSON format:
+Export format (v2):
 ```json
 {
-  "0_A": "Trooper - 80s Pack",
-  "0_B": "80s Lead - 80s Pack",
-  "1_A": "Final Countdown - 80s Pack"
+  "version": 2,
+  "presets": {
+    "0_A": "Trooper - 80s Pack",
+    "0_B": "80s Lead - 80s Pack"
+  },
+  "buttons": {
+    "0": { "bank": 0, "slot": "A" },
+    "4": { "bank": 1, "slot": "B" }
+  },
+  "colors": {
+    "0": "red",
+    "4": "blue"
+  }
 }
 ```
 
@@ -102,9 +115,10 @@ JSON format:
 
 - **Single click** on a button → sends Bank Select + Program Change to the pedal
 - **Drag** a preset from the library → assigns to the button
-- **Drag** a button to another → swaps positions
-- **Drag** a button to the trash → clears the button
-- **Double-click** → opens edit modal (name)
+- **Drag** a button to another → swaps positions (colors swap too)
+- **Drag** a button to the trash → clears the button and its color
+- **Double-click** → opens edit modal (rename)
+- **Color dot** (top-right corner) → click to assign a LED color to the tile
 
 ### Library
 
@@ -224,6 +238,10 @@ Everything is saved in `localStorage` under the key `tonex-state`:
   "presets": {
     "0_A": { "name": "Trooper - 80s Pack", "amp": true, "cab": false },
     "0_B": { "name": "80s Lead - 80s Pack", "amp": true, "cab": true }
+  },
+  "colors": {
+    "0": "red",
+    "4": "blue"
   }
 }
 ```

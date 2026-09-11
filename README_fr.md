@@ -19,16 +19,17 @@ Démo vidéo Android :
 ## Fonctionnalités
 
 - **Grille 3×3** de presets assignables avec noms
+- **Couleurs de presets** — assigner l'une des 9 couleurs LED (rouge, vert, ambre, jaune, cyan, bleu, rose, violet, blanc) à chaque tuile
 - **Bibliothèque complète** des 150 presets (50 banks × 3 slots A/B/C)
 - **Synchronisation USB** — lecture de tous les noms directement depuis le pédalier
 - **Contrôle MIDI** — envoi de Bank Select + Program Change pour changer de preset
 - **Glisser-déposer** — assigner un preset à un bouton, swap entre boutons, ou supprimer via la corbeille
-- **Édition** — double-clic pour renommer un preset et toggler AMP/CAB
+- **Édition** — double-clic pour renommer un preset
 - **Recherche** filtrante dans la bibliothèque
 - **Persistance** — configuration sauvegardée en localStorage
 - **Responsive** — texte adaptatif via `container-type: inline-size` + unités `cqi`
 - **Bascule bibliothèque** — chevron discret pour minimiser/étendre la bibliothèque de presets
-- **Export/Import JSON** — exporte les noms de presets vers un fichier, importe sur une autre config
+- **Export/Import JSON** — exporte les noms de presets, les assignations de grille et les couleurs vers un fichier, importe sur une autre config
 - **Support Android** — fonctionne sur Android Chrome via fallback WebUSB (Web Serial non disponible sur Android)
 
 ## Prérequis
@@ -88,15 +89,27 @@ Simplement double-cliquer sur `index.html` ou l'ouvrir via `file:///` dans votre
 
 ### Export / Import JSON
 
-- Cliquer sur **⬇ JSON** pour télécharger les noms de presets en `tonex-presets.json`
-- Cliquer sur **⬆ JSON** pour importer un fichier exporté (valide le format, remplace les noms)
+- Cliquer sur **⬇ JSON** pour télécharger les noms de presets, les assignations de grille et les couleurs en `tonex-config.json`
+- Cliquer sur **⬆ JSON** pour importer un fichier exporté
+  - **Ancien format** (noms de presets uniquement) : importe les noms directement
+  - **Nouveau format** (v2 avec config grille) : demande si on veut restaurer les assignations et couleurs
 
-Format JSON :
+Format d'export (v2) :
 ```json
 {
-  "0_A": "Trooper - 80s Pack",
-  "0_B": "80s Lead - 80s Pack",
-  "1_A": "Final Countdown - 80s Pack"
+  "version": 2,
+  "presets": {
+    "0_A": "Trooper - 80s Pack",
+    "0_B": "80s Lead - 80s Pack"
+  },
+  "buttons": {
+    "0": { "bank": 0, "slot": "A" },
+    "4": { "bank": 1, "slot": "B" }
+  },
+  "colors": {
+    "0": "red",
+    "4": "blue"
+  }
 }
 ```
 
@@ -104,9 +117,10 @@ Format JSON :
 
 - **Clic simple** sur un bouton → envoie le Bank Select + Program Change au pédalier
 - **Glisser** un preset de la bibliothèque → assigne au bouton
-- **Glisser** un bouton vers un autre → swap les positions
-- **Glisser** un bouton vers la corbeille → vide le bouton
-- **Double-clic** → ouvre le modal d'édition (nom)
+- **Glisser** un bouton vers un autre → swap les positions (les couleurs suivent)
+- **Glisser** un bouton vers la corbeille → vide le bouton et sa couleur
+- **Double-clic** → ouvre le modal d'édition (renommage)
+- **Rond couleur** (coin supérieur droit) → cliquer pour assigner une couleur LED à la tuile
 
 ### Bibliothèque
 
@@ -224,6 +238,10 @@ Tout est sauvegardé en `localStorage` sous la clé `tonex-state` :
   "presets": {
     "0_A": { "name": "Trooper - 80s Pack", "amp": true, "cab": false },
     "0_B": { "name": "80s Lead - 80s Pack", "amp": true, "cab": true }
+  },
+  "colors": {
+    "0": "red",
+    "4": "blue"
   }
 }
 ```
