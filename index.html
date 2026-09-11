@@ -1122,23 +1122,24 @@
             }
         }
 
-        function bankSelectAndPC(bank, slot) {
+        async function bankSelectAndPC(bank, slot) {
             if (!midiOutput) return;
             const pc = pcFromBankSlot(bank, slot);
             const ch = midiChannel;
+            const midiCh = 0xB0 + ch;
+            const bankVal = pc > 127 ? 1 : 0;
+            const pcVal = pc > 127 ? pc - 128 : pc;
 
-            if (pc > 127) {
-                const midiCh = 0xB0 + ch;
-                midiOutput.send([midiCh, 0, 1]);
-                setTimeout(() => {
-                    midiOutput.send([0xC0 + ch, pc - 128]);
-                }, 30);
+            if (midiOutput.isBLE) {
+                await midiOutput.send([0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal]);
             } else {
-                const midiCh = 0xB0 + ch;
-                midiOutput.send([midiCh, 0, 0]);
-                setTimeout(() => {
-                    midiOutput.send([0xC0 + ch, pc]);
-                }, 30);
+                if (pc > 127) {
+                    midiOutput.send([midiCh, 0, 1]);
+                    setTimeout(() => { midiOutput.send([0xC0 + ch, pc - 128]); }, 30);
+                } else {
+                    midiOutput.send([midiCh, 0, 0]);
+                    setTimeout(() => { midiOutput.send([0xC0 + ch, pc]); }, 30);
+                }
             }
 
             activePresetPC = pc;
@@ -1289,7 +1290,7 @@
                                 isBLE: true,
                                 send: async function(data) {
                                     if (!bleMidiCharacteristic) return;
-                                    try { await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array([0x80, ...data])); } catch(e) {}
+                                    try { await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array(data)); } catch(e) {}
                                 }
                             };
 
