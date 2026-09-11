@@ -1092,44 +1092,55 @@
             try {
                 const midiAccess = await navigator.requestMIDIAccess();
                 const select = document.getElementById('midi-device');
-                select.innerHTML = '';
 
-                const outputs = Array.from(midiAccess.outputs.values());
-                if (outputs.length === 0) {
-                    const opt = document.createElement('option');
-                    opt.textContent = t('noDevice');
-                    select.appendChild(opt);
-                    return;
-                }
+                function refreshMIDIDevices() {
+                    const outputs = Array.from(midiAccess.outputs.values());
+                    const prevDevice = midiOutput ? midiOutput.name : null;
+                    select.innerHTML = '';
 
-                outputs.forEach((out, i) => {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.textContent = out.name;
-                    select.appendChild(opt);
-                });
-
-                select.addEventListener('change', () => {
-                    midiOutput = outputs[parseInt(select.value)];
-                    updateMIDIStatus(true);
-                    state.midi.device = midiOutput.name;
-                    saveState();
-                });
-
-                let found = false;
-                if (state.midi.device) {
-                    const idx = outputs.findIndex(o => o.name === state.midi.device);
-                    if (idx >= 0) {
-                        select.value = idx;
-                        midiOutput = outputs[idx];
-                        found = true;
+                    if (outputs.length === 0) {
+                        const opt = document.createElement('option');
+                        opt.textContent = t('noDevice');
+                        select.appendChild(opt);
+                        midiOutput = null;
+                        updateMIDIStatus(false);
+                        return;
                     }
+
+                    outputs.forEach((out, i) => {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        const isBluetooth = out.type === 'output' && /bluetooth|ble/i.test(out.manufacturer + out.name);
+                        opt.textContent = out.name + (isBluetooth ? ' 📡' : '');
+                        select.appendChild(opt);
+                    });
+
+                    select.onchange = null;
+                    select.addEventListener('change', () => {
+                        midiOutput = outputs[parseInt(select.value)];
+                        updateMIDIStatus(true);
+                        state.midi.device = midiOutput.name;
+                        saveState();
+                    });
+
+                    let found = false;
+                    if (prevDevice) {
+                        const idx = outputs.findIndex(o => o.name === prevDevice);
+                        if (idx >= 0) {
+                            select.value = idx;
+                            midiOutput = outputs[idx];
+                            found = true;
+                        }
+                    }
+                    if (!found && outputs.length > 0) {
+                        midiOutput = outputs[0];
+                        select.value = 0;
+                    }
+                    updateMIDIStatus(!!midiOutput);
                 }
-                if (!found && outputs.length > 0) {
-                    midiOutput = outputs[0];
-                    select.value = 0;
-                }
-                updateMIDIStatus(!!midiOutput);
+
+                refreshMIDIDevices();
+                midiAccess.onstatechange = () => refreshMIDIDevices();
 
                 const chSelect = document.getElementById('midi-channel');
                 chSelect.innerHTML = '';
