@@ -855,6 +855,7 @@
         </div>
     </div>
     <div id="ble-debug" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#111;color:#0f0;font-family:monospace;font-size:0.7em;padding:8px;z-index:9999;max-height:120px;overflow-y:auto;white-space:pre-wrap;border-top:2px solid #0f0;"></div>
+    <button id="ble-test-btn" style="display:none;position:fixed;bottom:125px;right:10px;z-index:9999;background:#e67e22;color:#fff;border:none;border-radius:50%;width:48px;height:48px;font-size:1.5em;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.5);">M</button>
 
     <script>
     (function() {
@@ -1295,27 +1296,44 @@
                                 isBLE: true,
                                 send: async function(data) {
                                     if (!bleMidiCharacteristic) {
-                                        bleDebug('ERROR: no characteristic');
+                                        bleDebug('ERR: pas de characteristic');
                                         return;
                                     }
-                                    const header = 0x80;
-                                    const tsLow = 0x00;
-                                    const packet = new Uint8Array([header, tsLow, ...data]);
+                                    const packet = new Uint8Array([0x80, 0x00, ...data]);
                                     const hex = Array.from(packet).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
                                     bleDebug('TX: ' + hex);
                                     try {
                                         await bleMidiCharacteristic.writeValueWithoutResponse(packet);
-                                        bleDebug('TX OK (no response)');
+                                        bleDebug('TX OK');
                                     } catch(e) {
-                                        bleDebug('TX fail: ' + e.message + ' → retrying with response');
-                                        try {
-                                            await bleMidiCharacteristic.writeValueWithResponse(packet);
-                                            bleDebug('TX OK (with response)');
-                                        } catch(e2) {
-                                            bleDebug('TX FAIL: ' + e2.message);
-                                        }
+                                        bleDebug('TX ERR: ' + e.message);
                                     }
                                 }
+                            };
+
+                            const testBtn = document.getElementById('ble-test-btn');
+                            testBtn.style.display = 'block';
+                            testBtn.onclick = async () => {
+                                if (!bleMidiCharacteristic) return;
+                                bleDebug('--- TEST ---');
+                                const tests = [
+                                    { name: 'PC ch0=5 (header 0x80+0x00)', data: [0x80, 0x00, 0xC0, 0x05] },
+                                    { name: 'PC ch0=5 (no header)', data: [0xC0, 0x05] },
+                                    { name: 'PC ch0=5 (0x80 only)', data: [0x80, 0xC0, 0x05] },
+                                    { name: 'CC0+PC ch0=5', data: [0x80, 0x00, 0xB0, 0x00, 0x00, 0x80, 0x00, 0xC0, 0x05] },
+                                    { name: 'CC0+PC ch0=5 (no header)', data: [0xB0, 0x00, 0x00, 0xC0, 0x05] },
+                                ];
+                                for (const t of tests) {
+                                    bleDebug('TEST: ' + t.name);
+                                    try {
+                                        await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array(t.data));
+                                        bleDebug('  → OK');
+                                    } catch(e) {
+                                        bleDebug('  → ERR: ' + e.message);
+                                    }
+                                    await new Promise(r => setTimeout(r, 100));
+                                }
+                                bleDebug('--- FIN TEST ---');
                             };
 
                             updateMIDIStatus(true);
