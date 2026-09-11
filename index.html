@@ -1131,7 +1131,9 @@
             const pcVal = pc > 127 ? pc - 128 : pc;
 
             if (midiOutput.isBLE) {
-                await midiOutput.send([0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal]);
+                await midiOutput.send([0x80, midiCh, 0, bankVal]);
+                await new Promise(r => setTimeout(r, 10));
+                await midiOutput.send([0x80, 0xC0 + ch, pcVal]);
             } else {
                 if (pc > 127) {
                     midiOutput.send([midiCh, 0, 1]);
