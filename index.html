@@ -1165,6 +1165,20 @@
                             startBLESearch(midiAccess, select);
                             return;
                         }
+                        if (select.value === 'ble-bt-device') {
+                            const deviceName = select.options[select.selectedIndex].textContent.replace(' 📡', '');
+                            for (const out of midiAccess.outputs.values()) {
+                                if (out.name === deviceName || (out.device && out.device.name === deviceName)) {
+                                    midiOutput = out;
+                                    updateMIDIStatus(true);
+                                    state.midi.device = out.name;
+                                    saveState();
+                                    return;
+                                }
+                            }
+                            updateMIDIStatus(false);
+                            return;
+                        }
                         midiOutput = outputs[parseInt(select.value)];
                         updateMIDIStatus(true);
                         state.midi.device = midiOutput.name;
@@ -1206,6 +1220,9 @@
                             const searchOpt = select.querySelector('option[value="ble-search"]');
                             select.insertBefore(opt, searchOpt);
 
+                            const idx = Array.from(select.options).indexOf(opt);
+                            select.value = idx;
+
                             let matched = false;
                             for (const out of midiAccess.outputs.values()) {
                                 if (out.name === device.name || (out.device && out.device.name === device.name)) {
@@ -1215,13 +1232,9 @@
                                 }
                             }
 
-                            const idx = Array.from(select.options).indexOf(opt);
-                            select.value = idx;
                             updateMIDIStatus(true);
-                            if (matched) {
-                                state.midi.device = device.name;
-                                saveState();
-                            }
+                            state.midi.device = device.name;
+                            saveState();
                         }
                     } catch (err) {
                         overlay.style.display = 'none';
