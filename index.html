@@ -450,6 +450,121 @@
             color: #555;
         }
 
+        /* --- Color dot & tinting --- */
+
+        .color-dot {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #533483;
+            cursor: pointer;
+            opacity: 0.4;
+            transition: opacity 0.15s, transform 0.15s;
+            z-index: 10;
+            background: #0f3460;
+        }
+
+        .grid-btn:hover .color-dot {
+            opacity: 1;
+        }
+
+        .grid-btn .color-dot.has-color {
+            opacity: 1;
+        }
+
+        .color-dot:hover {
+            transform: scale(1.3);
+            border-color: #e0e0e0;
+        }
+
+        .grid-btn.color-red    { background: rgba(255,0,0,0.10); border-color: #ff4444; }
+        .grid-btn.color-green  { background: rgba(0,255,0,0.10); border-color: #4caf50; }
+        .grid-btn.color-amber  { background: rgba(255,191,0,0.10); border-color: #ffbf00; }
+        .grid-btn.color-yellow { background: rgba(255,255,0,0.10); border-color: #ffff00; }
+        .grid-btn.color-cyan   { background: rgba(0,255,255,0.10); border-color: #00ffff; }
+        .grid-btn.color-blue   { background: rgba(0,0,255,0.10); border-color: #4488ff; }
+        .grid-btn.color-pink   { background: rgba(255,0,255,0.10); border-color: #ff44ff; }
+        .grid-btn.color-purple { background: rgba(128,0,255,0.10); border-color: #8800ff; }
+        .grid-btn.color-white  { background: rgba(255,255,255,0.08); border-color: #ffffff; }
+
+        .grid-btn.color-red.active    { box-shadow: 0 0 16px rgba(255,0,0,0.3); }
+        .grid-btn.color-green.active  { box-shadow: 0 0 16px rgba(0,255,0,0.3); }
+        .grid-btn.color-amber.active  { box-shadow: 0 0 16px rgba(255,191,0,0.3); }
+        .grid-btn.color-yellow.active { box-shadow: 0 0 16px rgba(255,255,0,0.3); }
+        .grid-btn.color-cyan.active   { box-shadow: 0 0 16px rgba(0,255,255,0.3); }
+        .grid-btn.color-blue.active   { box-shadow: 0 0 16px rgba(0,0,255,0.3); }
+        .grid-btn.color-pink.active   { box-shadow: 0 0 16px rgba(255,0,255,0.3); }
+        .grid-btn.color-purple.active { box-shadow: 0 0 16px rgba(128,0,255,0.3); }
+        .grid-btn.color-white.active  { box-shadow: 0 0 16px rgba(255,255,255,0.3); }
+
+        /* --- Color popover --- */
+        .color-popover {
+            position: absolute;
+            top: calc(100% + 6px);
+            right: 0;
+            background: #16213e;
+            border: 2px solid #533483;
+            border-radius: 8px;
+            padding: 8px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .color-popover::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 10px;
+            width: 10px;
+            height: 10px;
+            background: #16213e;
+            border-left: 2px solid #533483;
+            border-top: 2px solid #533483;
+            transform: rotate(45deg);
+        }
+
+        .color-swatch {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 2px solid #0f3460;
+            cursor: pointer;
+            transition: transform 0.15s, border-color 0.15s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.2);
+            border-color: #e0e0e0;
+        }
+
+        .color-swatch.selected {
+            border-color: #e94560;
+            box-shadow: 0 0 8px rgba(233,69,96,0.5);
+        }
+
+        .color-swatch.off {
+            background: #0f3460;
+            position: relative;
+        }
+
+        .color-swatch.off::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background: #e94560;
+            transform: rotate(45deg);
+        }
+
         footer {
             background: #16213e;
             border-top: 1px solid #0f3460;
@@ -705,8 +820,8 @@
         <div class="edit-modal">
             <h3 id="edit-title" data-i18n="editTitle">Éditer le preset</h3>
             <label data-i18n="presetName">Nom du preset</label>
-            <input type="text" id="edit-name" maxlength="20" data-i18n-placeholder="presetName" placeholder="Nom du preset">
-            <div class="checkbox-row">
+            <input type="text" id="edit-name" maxlength="32" data-i18n-placeholder="presetName" placeholder="Nom du preset">
+            <div class="checkbox-row" id="edit-checkbox-row">
                 <label><input type="checkbox" id="edit-amp"> AMP</label>
                 <label><input type="checkbox" id="edit-cab"> CAB</label>
             </div>
@@ -714,6 +829,17 @@
                 <button class="btn-cancel" id="edit-cancel" data-i18n="cancel">Annuler</button>
                 <button class="btn-delete" id="edit-delete" style="display:none" data-i18n="delete">Effacer</button>
                 <button class="btn-save" id="edit-save" data-i18n="save">Valider</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="edit-overlay" id="import-overlay" style="display:none">
+        <div class="edit-modal">
+            <h3 id="import-confirm-title" data-i18n="importConfirmTitle">Restaurer la configuration des tuiles ?</h3>
+            <p id="import-confirm-desc" data-i18n="importConfirmDesc" style="color:#ccc;font-size:0.9em;margin:12px 0;">Ce fichier contient la configuration de la grille. Voulez-vous la restaurer ?</p>
+            <div class="btn-row">
+                <button class="btn-cancel" id="import-confirm-no" data-i18n="importConfirmNo">Non, presets uniquement</button>
+                <button class="btn-save" id="import-confirm-yes" data-i18n="importConfirmYes">Oui, tout restaurer</button>
             </div>
         </div>
     </div>
@@ -752,12 +878,16 @@
                 portError: 'Impossible d\'ouvrir le port s\u00e9rie: ',
                 langToggle: 'EN',
                 htmlLang: 'fr',
-                exportJSON: 'Exporter les noms en JSON',
-                importJSON: 'Importer les noms depuis JSON',
+                exportJSON: 'Exporter la config en JSON',
+                importJSON: 'Importer une config JSON',
                 exportDone: 'Export termin\u00e9!',
                 importDone: 'Import termin\u00e9!',
                 importInvalid: 'Fichier JSON invalide ou format incorrect',
-                importCount: ' presets import\u00e9s'
+                importCount: ' presets import\u00e9s',
+                importConfirmTitle: 'Restaurer la configuration des tuiles ?',
+                importConfirmDesc: 'Ce fichier contient la configuration de la grille (presets assign\u00e9s et couleurs). Voulez-vous la restaurer ?',
+                importConfirmYes: 'Oui, tout restaurer',
+                importConfirmNo: 'Non, presets uniquement'
             },
             en: {
                 device: 'Device:',
@@ -789,12 +919,16 @@
                 portError: 'Cannot open serial port: ',
                 langToggle: 'FR',
                 htmlLang: 'en',
-                exportJSON: 'Export preset names to JSON',
-                importJSON: 'Import preset names from JSON',
+                exportJSON: 'Export config to JSON',
+                importJSON: 'Import config from JSON',
                 exportDone: 'Export done!',
                 importDone: 'Import done!',
                 importInvalid: 'Invalid JSON file or incorrect format',
-                importCount: ' presets imported'
+                importCount: ' presets imported',
+                importConfirmTitle: 'Restore grid configuration?',
+                importConfirmDesc: 'This file contains grid configuration (assigned presets and colors). Do you want to restore it?',
+                importConfirmYes: 'Yes, restore all',
+                importConfirmNo: 'No, presets only'
             }
         };
 
@@ -867,14 +1001,18 @@
             return {
                 buttons: {},
                 midi: { device: '', channel: 0 },
-                presets: {}
+                presets: {},
+                colors: {}
             };
         }
 
         function loadState() {
             try {
                 const s = JSON.parse(localStorage.getItem('tonex-state'));
-                if (s && s.buttons) return s;
+                if (s && s.buttons) {
+                    s.colors = s.colors || {};
+                    return s;
+                }
             } catch(e) {}
             return defaultState();
         }
@@ -1114,6 +1252,18 @@
         }
 
         // --- Grid ---
+        const TONEX_COLORS = [
+            { id: 'red',    hex: '#ff4444' },
+            { id: 'green',  hex: '#4caf50' },
+            { id: 'amber',  hex: '#ffbf00' },
+            { id: 'yellow', hex: '#ffff00' },
+            { id: 'cyan',   hex: '#00ffff' },
+            { id: 'blue',   hex: '#4488ff' },
+            { id: 'pink',   hex: '#ff44ff' },
+            { id: 'purple', hex: '#8800ff' },
+            { id: 'white',  hex: '#ffffff' }
+        ];
+
         function renderGrid() {
             const grid = document.getElementById('preset-grid');
             grid.innerHTML = '';
@@ -1122,6 +1272,11 @@
                 const btn = document.createElement('div');
                 btn.className = 'grid-btn';
                 btn.dataset.slotIndex = i;
+
+                const slotColor = state.colors[i];
+                if (slotColor) {
+                    btn.classList.add('color-' + slotColor);
+                }
 
                 const assigned = state.buttons[i];
 
@@ -1149,6 +1304,7 @@
                     });
 
                     btn.addEventListener('dragstart', (e) => {
+                        closeColorPopover();
                         e.dataTransfer.setData('text/plain', JSON.stringify({
                             source: 'grid',
                             buttonIndex: i,
@@ -1166,6 +1322,24 @@
                     btn.classList.add('empty');
                     btn.innerHTML = '<span class="empty-label">' + t('empty') + '</span>';
                 }
+
+                // Color dot (on all tiles, assigned or not)
+                const dot = document.createElement('div');
+                dot.className = 'color-dot';
+                dot.dataset.slotIndex = i;
+                if (slotColor) {
+                    const colorInfo = TONEX_COLORS.find(c => c.id === slotColor);
+                    if (colorInfo) {
+                        dot.style.background = colorInfo.hex;
+                        dot.classList.add('has-color');
+                    }
+                }
+                dot.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeColorPopover();
+                    openColorPopover(dot, i);
+                });
+                btn.appendChild(dot);
 
                 btn.addEventListener('dragover', (e) => {
                     e.preventDefault();
@@ -1188,6 +1362,66 @@
             }
         }
 
+        // --- Color Popover ---
+        let activeColorPopover = null;
+
+        function closeColorPopover() {
+            if (activeColorPopover) {
+                activeColorPopover.remove();
+                activeColorPopover = null;
+            }
+        }
+
+        function openColorPopover(dot, slotIndex) {
+            const popover = document.createElement('div');
+            popover.className = 'color-popover';
+
+            const currentColor = state.colors[slotIndex];
+
+            // Off option (transparent)
+            const offSwatch = document.createElement('div');
+            offSwatch.className = 'color-swatch off' + (!currentColor ? ' selected' : '');
+            offSwatch.title = 'Off';
+            offSwatch.addEventListener('click', (e) => {
+                e.stopPropagation();
+                delete state.colors[slotIndex];
+                saveState();
+                closeColorPopover();
+                renderGrid();
+            });
+            popover.appendChild(offSwatch);
+
+            // Color options
+            TONEX_COLORS.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch' + (currentColor === color.id ? ' selected' : '');
+                swatch.style.background = color.hex;
+                swatch.title = color.id;
+                swatch.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    state.colors[slotIndex] = color.id;
+                    saveState();
+                    closeColorPopover();
+                    renderGrid();
+                });
+                popover.appendChild(swatch);
+            });
+
+            document.body.appendChild(popover);
+            activeColorPopover = popover;
+
+            // Position popover below the dot
+            const dotRect = dot.getBoundingClientRect();
+            popover.style.position = 'fixed';
+            popover.style.top = (dotRect.bottom + 6) + 'px';
+            popover.style.left = Math.min(dotRect.left, window.innerWidth - 180) + 'px';
+
+            // Close on click outside
+            setTimeout(() => {
+                document.addEventListener('click', closeColorPopover, { once: true });
+            }, 0);
+        }
+
         function handleDrop(data, targetIndex) {
             justDragged = true;
             setTimeout(() => justDragged = false, 100);
@@ -1202,13 +1436,19 @@
 
                 const targetData = state.buttons[targetIndex];
                 const sourceData = state.buttons[sourceIndex];
+                const targetColor = state.colors[targetIndex];
+                const sourceColor = state.colors[sourceIndex];
 
                 if (targetData) {
                     state.buttons[sourceIndex] = targetData;
                     state.buttons[targetIndex] = sourceData;
+                    if (targetColor) state.colors[sourceIndex] = targetColor; else delete state.colors[sourceIndex];
+                    if (sourceColor) state.colors[targetIndex] = sourceColor; else delete state.colors[targetIndex];
                 } else {
                     state.buttons[targetIndex] = sourceData;
                     delete state.buttons[sourceIndex];
+                    if (sourceColor) state.colors[targetIndex] = sourceColor; else delete state.colors[targetIndex];
+                    delete state.colors[sourceIndex];
                 }
                 saveState();
                 renderGrid();
@@ -1240,6 +1480,7 @@
                     const data = JSON.parse(e.dataTransfer.getData('text/plain'));
                     if (data.source === 'grid') {
                         delete state.buttons[data.buttonIndex];
+                        delete state.colors[data.buttonIndex];
                         saveState();
                         renderGrid();
                     }
@@ -1255,6 +1496,7 @@
             const ampCheck = document.getElementById('edit-amp');
             const cabCheck = document.getElementById('edit-cab');
             const deleteBtn = document.getElementById('edit-delete');
+            const checkboxRow = document.getElementById('edit-checkbox-row');
 
             let editBank, editSlot;
             if (source === 'grid' && buttonIndex !== undefined) {
@@ -1264,11 +1506,13 @@
                 editSlot = assigned.slot;
                 title.textContent = t('editButton') + (buttonIndex + 1);
                 deleteBtn.style.display = 'inline-block';
+                checkboxRow.style.display = 'none';
             } else {
                 editBank = bank;
                 editSlot = slot;
                 title.textContent = t('editPreset') + String(bank).padStart(2,'0') + editSlot;
                 deleteBtn.style.display = 'none';
+                checkboxRow.style.display = 'none';
             }
 
             const info = getPresetInfo(editBank, editSlot);
@@ -1736,28 +1980,99 @@
 
         // --- Export / Import JSON ---
         document.getElementById('exportJSON').addEventListener('click', () => {
-            const exportData = {};
+            const exportData = {
+                version: 2,
+                presets: {},
+                buttons: {},
+                colors: {}
+            };
+
             for (let bank = 0; bank < TOTAL_BANKS; bank++) {
                 for (const slot of SLOTS) {
                     const key = getPresetKey(bank, slot);
                     const info = state.presets[key];
                     if (info && info.name) {
-                        exportData[key] = info.name;
+                        exportData.presets[key] = info.name;
                     }
                 }
             }
+
+            for (const [idx, btn] of Object.entries(state.buttons)) {
+                exportData.buttons[idx] = { bank: btn.bank, slot: btn.slot };
+            }
+
+            for (const [idx, color] of Object.entries(state.colors)) {
+                exportData.colors[idx] = color;
+            }
+
             const json = JSON.stringify(exportData, null, 2);
             const blob = new Blob([json], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'tonex-presets.json';
+            a.download = 'tonex-config.json';
             a.click();
             URL.revokeObjectURL(url);
         });
 
         document.getElementById('importJSON').addEventListener('click', () => {
             document.getElementById('importFileInput').click();
+        });
+
+        let pendingImportData = null;
+
+        function importPresetsOnly(data) {
+            let count = 0;
+            const presets = data.presets || data;
+            for (const [key, name] of Object.entries(presets)) {
+                const match = key.match(/^(\d+)_([ABC])$/);
+                if (!match) continue;
+                if (typeof name !== 'string' || name.length === 0) continue;
+                const bank = parseInt(match[1]);
+                const slot = match[2];
+                if (bank < 0 || bank >= TOTAL_BANKS) continue;
+                const presetKey = getPresetKey(bank, slot);
+                if (!state.presets[presetKey]) state.presets[presetKey] = {};
+                state.presets[presetKey].name = name;
+                count++;
+            }
+            saveState();
+            renderLibrary();
+            renderGrid();
+            alert(t('importDone') + ' ' + count + t('importCount'));
+        }
+
+        function importGridConfig(data) {
+            if (data.buttons) {
+                state.buttons = {};
+                for (const [idx, btn] of Object.entries(data.buttons)) {
+                    state.buttons[idx] = { bank: btn.bank, slot: btn.slot };
+                }
+            }
+            if (data.colors) {
+                state.colors = {};
+                for (const [idx, color] of Object.entries(data.colors)) {
+                    state.colors[idx] = color;
+                }
+            }
+        }
+
+        document.getElementById('import-confirm-yes').addEventListener('click', () => {
+            document.getElementById('import-overlay').style.display = 'none';
+            if (!pendingImportData) return;
+            importPresetsOnly(pendingImportData);
+            importGridConfig(pendingImportData);
+            saveState();
+            renderLibrary();
+            renderGrid();
+            pendingImportData = null;
+        });
+
+        document.getElementById('import-confirm-no').addEventListener('click', () => {
+            document.getElementById('import-overlay').style.display = 'none';
+            if (!pendingImportData) return;
+            importPresetsOnly(pendingImportData);
+            pendingImportData = null;
         });
 
         document.getElementById('importFileInput').addEventListener('change', (e) => {
@@ -1771,29 +2086,28 @@
                         alert(t('importInvalid'));
                         return;
                     }
-                    let count = 0;
-                    for (const [key, name] of Object.entries(data)) {
-                        const match = key.match(/^(\d+)_([ABC])$/);
-                        if (!match) continue;
-                        if (typeof name !== 'string' || name.length === 0) continue;
-                        const bank = parseInt(match[1]);
-                        const slot = match[2];
-                        if (bank < 0 || bank >= TOTAL_BANKS) continue;
-                        const presetKey = getPresetKey(bank, slot);
-                        if (!state.presets[presetKey]) state.presets[presetKey] = {};
-                        state.presets[presetKey].name = name;
-                        count++;
+
+                    const isV2 = data.version === 2 && data.presets;
+
+                    if (!isV2) {
+                        importPresetsOnly(data);
+                    } else {
+                        pendingImportData = data;
+                        document.getElementById('import-overlay').style.display = 'flex';
                     }
-                    saveState();
-                    renderLibrary();
-                    renderGrid();
-                    alert(t('importDone') + ' ' + count + t('importCount'));
                 } catch(err) {
                     alert(t('importInvalid'));
                 }
             };
             reader.readAsText(file);
             e.target.value = '';
+        });
+
+        document.getElementById('import-overlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                e.target.style.display = 'none';
+                pendingImportData = null;
+            }
         });
 
         // --- Library Toggle ---
