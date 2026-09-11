@@ -1018,6 +1018,7 @@
         let justDragged = false;
         let activePresetBank = -1;
         let activePresetSlot = '';
+        let bleDeviceName = null;
 
         // --- State ---
         let state = loadState();
@@ -1139,7 +1140,15 @@
                         });
 
                         let found = false;
-                        if (prevDevice) {
+                        if (bleDeviceName) {
+                            const idx = outputs.findIndex(o => o.name === bleDeviceName);
+                            if (idx >= 0) {
+                                select.value = idx;
+                                midiOutput = outputs[idx];
+                                found = true;
+                                updateMIDIStatus(true);
+                            }
+                        } else if (prevDevice) {
                             const idx = outputs.findIndex(o => o.name === prevDevice);
                             if (idx >= 0) {
                                 select.value = idx;
@@ -1222,6 +1231,8 @@
 
                             const idx = Array.from(select.options).indexOf(opt);
                             select.value = idx;
+
+                            bleDeviceName = device.name;
 
                             let matched = false;
                             for (const out of midiAccess.outputs.values()) {
