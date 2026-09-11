@@ -1190,7 +1190,8 @@
                     select.appendChild(bleSearchOpt);
 
                     select.onchange = null;
-                    select.addEventListener('change', async () => {
+                    select.removeEventListener('change', select._bleChangeHandler);
+                    select._bleChangeHandler = async () => {
                         if (select.value === 'ble-search') {
                             startBLESearch(midiAccess, select);
                             return;
@@ -1205,7 +1206,8 @@
                             state.midi.device = midiOutput.name;
                             saveState();
                         }
-                    });
+                    };
+                    select.addEventListener('change', select._bleChangeHandler);
                 }
 
                 async function startBLESearch(midiAccess, select) {
@@ -1259,19 +1261,22 @@
                                 name: device.name || 'BLE MIDI',
                                 isBLE: true,
                                 send: async function(data) {
-                                    if (!bleMidiCharacteristic) return;
-                                    const timestamp = Date.now();
-                                    const header = 0x80 | ((timestamp >> 7) & 0x7F);
-                                    const tsLow = timestamp & 0x7F;
+                                    if (!bleMidiCharacteristic) {
+                                        console.warn('BLE MIDI: no characteristic');
+                                        return;
+                                    }
+                                    const header = 0x80;
+                                    const tsLow = 0x00;
                                     const packet = new Uint8Array([header, tsLow, ...data]);
+                                    console.log('BLE MIDI send:', Array.from(packet).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
                                     try {
                                         await bleMidiCharacteristic.writeValueWithoutResponse(packet);
                                     } catch(e) {
-                                        console.warn('BLE MIDI send error:', e);
+                                        console.warn('BLE MIDI writeWithoutResponse failed, trying withResponse:', e.message);
                                         try {
                                             await bleMidiCharacteristic.writeValueWithResponse(packet);
                                         } catch(e2) {
-                                            console.error('BLE MIDI send withResponse also failed:', e2);
+                                            console.error('BLE MIDI writeWithResponse also failed:', e2.message);
                                         }
                                     }
                                 }
