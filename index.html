@@ -1257,7 +1257,7 @@
 
                         try {
                             const device = await navigator.bluetooth.requestDevice({
-                                filters: [{ services: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700'] }],
+                                acceptAllDevices: true,
                                 optionalServices: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700']
                             });
 
@@ -1265,8 +1265,15 @@
                             bleDebug('GATT...');
 
                             let server;
-                            try { server = await device.gatt.connect(); bleDebug('GATT OK'); }
-                            catch(e) { bleDebug('GATT ERR: ' + e.message); status.textContent = 'GATT: ' + e.message; scanBtn.textContent = '🔍 ' + t('bleScan'); scanBtn.disabled = false; return; }
+                            try {
+                                if (device.gatt.connected) {
+                                    bleDebug('Déjà connecté, récupération...');
+                                    server = device.gatt;
+                                } else {
+                                    server = await device.gatt.connect();
+                                }
+                                bleDebug('GATT OK');
+                            } catch(e) { bleDebug('GATT ERR: ' + e.message); status.textContent = 'GATT: ' + e.message; scanBtn.textContent = '🔍 ' + t('bleScan'); scanBtn.disabled = false; return; }
 
                             let service;
                             try { service = await server.getPrimaryService('03b80e5a-ede8-4b33-a751-6ce34ec4c700'); bleDebug('Service OK'); }
