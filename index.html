@@ -854,7 +854,6 @@
             </div>
         </div>
     </div>
-    <div id="ble-debug" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#111;color:#0f0;font-family:monospace;font-size:0.7em;padding:8px;z-index:10001;max-height:120px;overflow-y:auto;white-space:pre-wrap;border-top:2px solid #0f0;"></div>
 
     <script>
     (function() {
@@ -1038,16 +1037,11 @@
         let midiChannel = 0;
 
         function bleDebug(msg) {
-            const el = document.getElementById('ble-debug');
-            if (!el) return;
-            el.style.display = 'block';
-            const time = new Date().toLocaleTimeString();
-            el.textContent = '[' + time + '] ' + msg + '\n' + el.textContent;
+            if (window.console && console.log) {
+                console.log('[BLE]', msg);
+            }
         }
 
-        document.getElementById('ble-debug').addEventListener('click', () => {
-            document.getElementById('ble-debug').style.display = 'none';
-        });
         let activePresetPC = -1;
         let editingButtonSlot = null;
         let justDragged = false;
@@ -1312,30 +1306,6 @@
 
                             bleDebug('CONNECTÉ: ' + device.name);
                             overlay.style.display = 'none';
-
-                            const testDiv = document.createElement('div');
-                            testDiv.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#222;color:#fff;font-family:monospace;font-size:0.7em;padding:8px;z-index:10002;max-height:140px;overflow-y:auto;border-bottom:2px solid #e67e22;';
-                            testDiv.innerHTML = '<b>BLE TEST:</b><br>';
-                            const tests = [
-                                { label: 'B0=0,PC=0 →42C?', pkt: [0x80,0xB0,0,0,0x80,0xC0,0] },
-                                { label: 'B0=1,PC=0 →42C?', pkt: [0x80,0xB0,0,1,0x80,0xC0,0] },
-                                { label: 'B0=0,PC=128 →42C?', pkt: [0x80,0xB0,0,0,0x80,0xC0,128] },
-                                { label: 'B0=1,PC=128 →42C?', pkt: [0x80,0xB0,0,1,0x80,0xC0,128] },
-                                { label: 'B0=0,PC=3 →1A?', pkt: [0x80,0xB0,0,0,0x80,0xC0,3] },
-                                { label: 'B0=0,PC=127 →42B?', pkt: [0x80,0xB0,0,0,0x80,0xC0,127] },
-                                { label: 'B0=42,PC=2 →42C?', pkt: [0x80,0xB0,0,42,0x80,0xC0,2] },
-                            ];
-                            tests.forEach(t => {
-                                const btn = document.createElement('button');
-                                btn.textContent = t.label;
-                                btn.style.cssText = 'margin:3px;padding:4px 8px;font-size:1em;background:#e67e22;color:#fff;border:none;border-radius:4px;cursor:pointer;';
-                                btn.onclick = async () => {
-                                    bleDebug('TEST ' + t.label + ' → ' + t.pkt.map(b=>'0x'+b.toString(16).padStart(2,'0')).join(' '));
-                                    await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array(t.pkt));
-                                };
-                                testDiv.appendChild(btn);
-                            });
-                            document.body.appendChild(testDiv);
 
                         } catch (err) {
                             if (err.name !== 'NotFoundError') {
