@@ -1140,26 +1140,29 @@
 
                 async function refreshMIDIDevices() {
                     const outputs = Array.from(midiAccess.outputs.values());
+                    const isBLEActive = midiOutput && midiOutput.isBLE;
                     const prevDevice = midiOutput ? midiOutput.name : null;
                     select.innerHTML = '';
 
-                    if (outputs.length === 0) {
+                    outputs.forEach((out, i) => {
                         const opt = document.createElement('option');
-                        opt.textContent = t('noDevice');
+                        opt.value = i;
+                        const isBluetooth = out.type === 'output' && /bluetooth|ble/i.test(out.manufacturer + out.name);
+                        opt.textContent = out.name + (isBluetooth ? ' 📡' : '');
                         select.appendChild(opt);
-                        midiOutput = null;
-                        updateMIDIStatus(false);
-                    } else {
-                        outputs.forEach((out, i) => {
-                            const opt = document.createElement('option');
-                            opt.value = i;
-                            const isBluetooth = out.type === 'output' && /bluetooth|ble/i.test(out.manufacturer + out.name);
-                            opt.textContent = out.name + (isBluetooth ? ' 📡' : '');
-                            select.appendChild(opt);
-                        });
+                    });
 
+                    if (isBLEActive) {
+                        const bleIdx = outputs.length;
+                        const bleOpt = document.createElement('option');
+                        bleOpt.value = bleIdx;
+                        bleOpt.textContent = '📡 ' + midiOutput.name + ' (BLE)';
+                        bleOpt.selected = true;
+                        select.appendChild(bleOpt);
+                        updateMIDIStatus(true);
+                    } else if (outputs.length > 0) {
                         let found = false;
-                        if (prevDevice && !(midiOutput && midiOutput.isBLE)) {
+                        if (prevDevice) {
                             const idx = outputs.findIndex(o => o.name === prevDevice);
                             if (idx >= 0) {
                                 select.value = idx;
@@ -1168,17 +1171,23 @@
                                 found = true;
                             }
                         }
-                        if (!found && outputs.length > 0 && !(midiOutput && midiOutput.isBLE)) {
+                        if (!found) {
                             midiOutput = outputs[0];
                             select.value = 0;
                         }
                         updateMIDIStatus(!!midiOutput);
+                    } else if (!isBLEActive) {
+                        const opt = document.createElement('option');
+                        opt.textContent = t('noDevice');
+                        select.appendChild(opt);
+                        midiOutput = null;
+                        updateMIDIStatus(false);
                     }
 
-                    const bleOpt = document.createElement('option');
-                    bleOpt.value = 'ble-search';
-                    bleOpt.textContent = '📡 ' + t('bleSearch');
-                    select.appendChild(bleOpt);
+                    const bleSearchOpt = document.createElement('option');
+                    bleSearchOpt.value = 'ble-search';
+                    bleSearchOpt.textContent = '📡 ' + t('bleSearch');
+                    select.appendChild(bleSearchOpt);
 
                     select.onchange = null;
                     select.addEventListener('change', async () => {
@@ -1186,7 +1195,9 @@
                             startBLESearch(midiAccess, select);
                             return;
                         }
-                        const newOutput = outputs[parseInt(select.value)];
+                        const idx = parseInt(select.value);
+                        if (isBLEActive && idx === outputs.length) return;
+                        const newOutput = outputs[idx];
                         if (newOutput) {
                             try { await newOutput.open(); } catch(e) { console.warn('MIDIOutput.open() error:', e); }
                             midiOutput = newOutput;
@@ -1267,6 +1278,8 @@
                                 console.log('BLE MIDI disconnected');
                                 midiOutput = null;
                                 bleMidiCharacteristic = null;
+                                state.midi.device = '';
+                                saveState();
                                 updateMIDIStatus(false);
                                 refreshMIDIDevices();
                             });
