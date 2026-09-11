@@ -1264,19 +1264,31 @@
                             status.textContent = t('bleConnecting');
                             bleDebug('Connexion GATT...');
                             const server = await device.gatt.connect();
-                            bleDebug('GATT connecté, recherche service MIDI...');
+                            bleDebug('GATT connecté');
                             const service = await server.getPrimaryService('03b80e5a-ede8-4b33-a751-6ce34ec4c700');
-                            bleDebug('Service trouvé, ouverture characteristic...');
+                            bleDebug('Service MIDI trouvé');
                             bleMidiCharacteristic = await service.getCharacteristic('7772e5db-3868-4112-a1a9-f2669d106bf3');
 
-                            await bleMidiCharacteristic.startNotifications();
-                            bleMidiCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-                                const data = event.target.value;
-                                const hex = Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
-                                bleDebug('RX: ' + hex);
-                                if (onBLEMidiReceive) onBLEMidiReceive(data);
-                            });
-                            bleDebug('Prêt ! Notifications activées.');
+                            const props = bleMidiCharacteristic.properties;
+                            bleDebug('Props: write=' + props.write + ' writeNoResp=' + props.writeWithoutResponse + ' notify=' + props.notify + ' indicate=' + props.indicate);
+
+                            if (props.notify || props.indicate) {
+                                try {
+                                    await bleMidiCharacteristic.startNotifications();
+                                    bleDebug('Notifications activées');
+                                    bleMidiCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
+                                        const data = event.target.value;
+                                        const hex = Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+                                        bleDebug('RX: ' + hex);
+                                        if (onBLEMidiReceive) onBLEMidiReceive(data);
+                                    });
+                                } catch(e) {
+                                    bleDebug('Notifications échouées: ' + e.message + ' (pas grave)');
+                                }
+                            } else {
+                                bleDebug('Pas de notifications supportées');
+                            }
+                            bleDebug('PRÊT !');
 
                             midiOutput = {
                                 name: device.name || 'BLE MIDI',
