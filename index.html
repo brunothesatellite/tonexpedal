@@ -17,7 +17,7 @@
 
         body {
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: #1a1a2e;
+            background: #1a1a1a;
             color: #e0e0e0;
             display: flex;
             flex-direction: column;
@@ -26,19 +26,19 @@
         }
 
         header {
-            background: #16213e;
+            background: #2a2a2a;
             padding: 12px 24px;
             display: flex;
             align-items: center;
             gap: 16px;
-            border-bottom: 2px solid #0f3460;
+            border-bottom: 2px solid #3a3a3a;
             flex-wrap: wrap;
             flex-shrink: 0;
         }
 
         header h1 {
             font-size: 1.2em;
-            color: #e94560;
+            color: #e67e22;
             margin-right: 16px;
         }
 
@@ -54,9 +54,9 @@
         }
 
         .midi-controls select {
-            background: #0f3460;
+            background: #3a3a3a;
             color: #e0e0e0;
-            border: 1px solid #533483;
+            border: 1px solid #4a4a4a;
             border-radius: 4px;
             padding: 5px 8px;
             font-size: 0.85em;
@@ -80,7 +80,7 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            background: #e94560;
+            background: #e67e22;
         }
 
         .midi-status .dot.connected {
@@ -91,9 +91,9 @@
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            background: #0f3460;
-            border: 1px solid #533483;
-            color: #e94560;
+            background: #3a3a3a;
+            border: 1px solid #4a4a4a;
+            color: #e67e22;
             font-size: 1em;
             font-weight: bold;
             display: flex;
@@ -106,8 +106,8 @@
         }
 
         .icon-btn:hover {
-            background: #533483;
-            border-color: #e94560;
+            background: #4a4a4a;
+            border-color: #e67e22;
         }
 
         .lang-btn {
@@ -128,33 +128,33 @@
         .library-panel {
             width: 320px;
             min-width: 280px;
-            border-right: 2px solid #0f3460;
+            border-right: 2px solid #3a3a3a;
             display: flex;
             flex-direction: column;
-            background: #16213e;
+            background: #2a2a2a;
             min-height: 0;
             overflow: hidden;
         }
 
         .library-header {
             padding: 12px;
-            border-bottom: 1px solid #0f3460;
+            border-bottom: 1px solid #3a3a3a;
         }
 
         .trash-zone {
             background: #2a1a1a;
-            border: 2px dashed #e94560;
+            border: 2px dashed #e67e22;
             border-radius: 8px;
             padding: 10px;
             text-align: center;
             margin-bottom: 10px;
             font-size: 0.9em;
-            color: #e94560;
+            color: #e67e22;
             transition: all 0.2s;
         }
 
         .trash-zone.drag-over {
-            background: #e94560;
+            background: #e67e22;
             color: #fff;
             border-color: #fff;
             transform: scale(1.02);
@@ -168,8 +168,8 @@
 
         .search-box {
             width: 100%;
-            background: #0f3460;
-            border: 1px solid #533483;
+            background: #3a3a3a;
+            border: 1px solid #4a4a4a;
             border-radius: 4px;
             padding: 8px 10px;
             color: #e0e0e0;
@@ -191,11 +191,11 @@
         }
 
         .preset-list::-webkit-scrollbar-track {
-            background: #1a1a2e;
+            background: #1a1a1a;
         }
 
         .preset-list::-webkit-scrollbar-thumb {
-            background: #533483;
+            background: #4a4a4a;
             border-radius: 4px;
         }
 
@@ -205,7 +205,7 @@
 
         .bank-label {
             font-size: 0.75em;
-            color: #533483;
+            color: #4a4a4a;
             font-weight: bold;
             padding: 4px 0;
             text-transform: uppercase;
@@ -225,13 +225,13 @@
         }
 
         .preset-row:hover {
-            background: #1a1a3e;
-            border-color: #533483;
+            background: #2a2a2a;
+            border-color: #4a4a4a;
         }
 
         .preset-row.active {
-            background: #0f3460;
-            border-color: #e94560;
+            background: #3a3a3a;
+            border-color: #e67e22;
         }
 
         .preset-row:active {
@@ -245,7 +245,7 @@
         .preset-slot {
             font-weight: bold;
             font-size: 0.9em;
-            color: #e94560;
+            color: #e67e22;
             width: 20px;
             text-align: center;
         }
@@ -308,11 +308,11 @@
             transform: translateY(-50%);
             width: 24px;
             height: 48px;
-            background: #16213e;
-            border: 2px solid #0f3460;
+            background: #2a2a2a;
+            border: 2px solid #3a3a3a;
             border-left: none;
             border-radius: 0 8px 8px 0;
-            color: #533483;
+            color: #4a4a4a;
             font-size: 14px;
             cursor: pointer;
             z-index: 10;
@@ -323,7 +323,7 @@
         }
 
         .library-toggle:hover {
-            color: #e94560;
+            color: #e67e22;
         }
 
         .main-layout.collapsed .library-panel {
@@ -373,8 +373,8 @@
         }
 
         .grid-btn {
-            background: #16213e;
-            border: 2px solid #0f3460;
+            background: #2a2a2a;
+            border: 2px solid #3a3a3a;
             border-radius: 12px;
             cursor: pointer;
             display: flex;
@@ -391,12 +391,12 @@
         }
 
         .grid-btn:hover {
-            border-color: #533483;
+            border-color: #4a4a4a;
         }
 
         .grid-btn.active {
-            border-color: #e94560;
-            box-shadow: 0 0 16px rgba(233, 69, 96, 0.3);
+            border-color: #e67e22;
+            box-shadow: 0 0 16px rgba(230, 126, 34, 0.3);
         }
 
         .grid-btn.drag-over {
@@ -415,14 +415,14 @@
 
         .grid-btn .btn-slot {
             font-size: clamp(12px, 4cqi, 24px);
-            color: #533483;
+            color: #4a4a4a;
             font-weight: bold;
         }
 
         .grid-btn .btn-preset {
             font-size: clamp(14px, 5.5cqi, 32px);
             font-weight: bold;
-            color: #e94560;
+            color: #e67e22;
         }
 
         .grid-btn .btn-name {
@@ -459,12 +459,12 @@
             width: 18px;
             height: 18px;
             border-radius: 50%;
-            border: 2px solid #533483;
+            border: 2px solid #4a4a4a;
             cursor: pointer;
             opacity: 0.4;
             transition: opacity 0.15s, transform 0.15s;
             z-index: 10;
-            background: #0f3460;
+            background: #3a3a3a;
         }
 
         .grid-btn:hover .color-dot {
@@ -505,8 +505,8 @@
             position: absolute;
             top: calc(100% + 6px);
             right: 0;
-            background: #16213e;
-            border: 2px solid #533483;
+            background: #2a2a2a;
+            border: 2px solid #4a4a4a;
             border-radius: 8px;
             padding: 8px;
             display: grid;
@@ -523,9 +523,9 @@
             right: 10px;
             width: 10px;
             height: 10px;
-            background: #16213e;
-            border-left: 2px solid #533483;
-            border-top: 2px solid #533483;
+            background: #2a2a2a;
+            border-left: 2px solid #4a4a4a;
+            border-top: 2px solid #4a4a4a;
             transform: rotate(45deg);
         }
 
@@ -533,7 +533,7 @@
             width: 28px;
             height: 28px;
             border-radius: 50%;
-            border: 2px solid #0f3460;
+            border: 2px solid #3a3a3a;
             cursor: pointer;
             transition: transform 0.15s, border-color 0.15s;
             display: flex;
@@ -547,12 +547,12 @@
         }
 
         .color-swatch.selected {
-            border-color: #e94560;
+            border-color: #e67e22;
             box-shadow: 0 0 8px rgba(233,69,96,0.5);
         }
 
         .color-swatch.off {
-            background: #0f3460;
+            background: #3a3a3a;
             position: relative;
         }
 
@@ -561,13 +561,13 @@
             position: absolute;
             width: 20px;
             height: 2px;
-            background: #e94560;
+            background: #e67e22;
             transform: rotate(45deg);
         }
 
         footer {
-            background: #16213e;
-            border-top: 1px solid #0f3460;
+            background: #2a2a2a;
+            border-top: 1px solid #3a3a3a;
             padding: 8px 24px;
             font-size: 0.75em;
             color: #666;
@@ -587,8 +587,8 @@
         }
 
         .edit-modal {
-            background: #16213e;
-            border: 2px solid #533483;
+            background: #2a2a2a;
+            border: 2px solid #4a4a4a;
             border-radius: 12px;
             padding: 24px;
             width: 360px;
@@ -596,7 +596,7 @@
 
         .edit-modal h3 {
             margin-bottom: 16px;
-            color: #e94560;
+            color: #e67e22;
         }
 
         .edit-modal label {
@@ -609,8 +609,8 @@
 
         .edit-modal input[type="text"] {
             width: 100%;
-            background: #0f3460;
-            border: 1px solid #533483;
+            background: #3a3a3a;
+            border: 1px solid #4a4a4a;
             border-radius: 4px;
             padding: 8px;
             color: #e0e0e0;
@@ -653,19 +653,19 @@
         }
 
         .btn-save {
-            background: #e94560;
+            background: #e67e22;
             color: #fff;
         }
 
         .btn-delete {
             background: #661111;
-            color: #e94560;
+            color: #e67e22;
         }
 
         .sync-btn {
-            background: #0f3460;
+            background: #3a3a3a;
             color: #e0e0e0;
-            border: 1px solid #533483;
+            border: 1px solid #4a4a4a;
             border-radius: 4px;
             padding: 5px 12px;
             font-size: 0.85em;
@@ -674,7 +674,7 @@
         }
 
         .sync-btn:hover {
-            background: #533483;
+            background: #4a4a4a;
         }
 
         .sync-btn:disabled {
@@ -697,7 +697,7 @@
         .sync-progress-bar {
             flex: 1;
             height: 6px;
-            background: #0f3460;
+            background: #3a3a3a;
             border-radius: 3px;
             overflow: hidden;
             min-width: 100px;
@@ -705,7 +705,7 @@
 
         .sync-progress-fill {
             height: 100%;
-            background: #e94560;
+            background: #e67e22;
             border-radius: 3px;
             transition: width 0.2s;
             width: 0%;
