@@ -1321,18 +1321,27 @@
                             testBtn.style.display = 'block';
                             testBtn.onclick = async () => {
                                 if (!bleMidiCharacteristic) return;
-                                bleDebug('--- TEST ALL CHANNELS ---');
-                                for (let ch = 0; ch < 16; ch++) {
-                                    bleDebug('PC ch' + ch + '=0');
+                                bleDebug('--- TEST FORMATS ---');
+                                const formats = [
+                                    { name: 'Standard BLE MIDI [80 00 C0 01]', data: [0x80, 0x00, 0xC0, 0x01] },
+                                    { name: 'Raw MIDI only [C0 01]', data: [0xC0, 0x01] },
+                                    { name: 'Header 80 [80 C0 01]', data: [0x80, 0xC0, 0x01] },
+                                    { name: 'Header 00 [00 C0 01]', data: [0x00, 0xC0, 0x01] },
+                                    { name: 'Full BLE MIDI [80 00 B0 00 00 80 00 C0 02]', data: [0x80, 0x00, 0xB0, 0x00, 0x00, 0x80, 0x00, 0xC0, 0x02] },
+                                    { name: 'Raw Bank+PC [B0 00 00 C0 02]', data: [0xB0, 0x00, 0x00, 0xC0, 0x02] },
+                                    { name: 'Header 80 Bank+PC [80 B0 00 00 80 C0 03]', data: [0x80, 0xB0, 0x00, 0x00, 0x80, 0xC0, 0x03] },
+                                ];
+                                for (const t of formats) {
+                                    bleDebug('TEST: ' + t.name);
                                     try {
-                                        await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array([0x80, 0x00, 0xC0 + ch, 0x00]));
+                                        await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array(t.data));
                                         bleDebug('  → OK');
                                     } catch(e) {
                                         bleDebug('  → ERR: ' + e.message);
                                     }
-                                    await new Promise(r => setTimeout(r, 200));
+                                    await new Promise(r => setTimeout(r, 300));
                                 }
-                                bleDebug('--- FIN TEST ---');
+                                bleDebug('--- FIN ---');
                             };
 
                             updateMIDIStatus(true);
