@@ -849,6 +849,7 @@
             <h3 id="ble-title" data-i18n="bleSelect">Choisir un appareil :</h3>
             <div id="ble-device-list" style="max-height:200px;overflow-y:auto;margin:12px 0;"></div>
             <p id="ble-status" style="color:#999;font-size:0.85em;text-align:center;"></p>
+            <div id="ble-debug" style="display:none;background:#111;color:#0f0;font-family:monospace;font-size:0.75em;padding:8px;border-radius:4px;margin-top:8px;max-height:150px;overflow-y:auto;white-space:pre-wrap;"></div>
             <div class="btn-row">
                 <button class="btn-cancel" id="ble-cancel" data-i18n="bleCancel">Annuler</button>
             </div>
@@ -1033,6 +1034,14 @@
         let bleMidiCharacteristic = null;
         let onBLEMidiReceive = null;
         let midiChannel = 0;
+
+        function bleDebug(msg) {
+            const el = document.getElementById('ble-debug');
+            if (!el) return;
+            el.style.display = 'block';
+            const time = new Date().toLocaleTimeString();
+            el.textContent = '[' + time + '] ' + msg + '\n' + el.textContent;
+        }
         let activePresetPC = -1;
         let editingButtonSlot = null;
         let justDragged = false;
@@ -1247,36 +1256,45 @@
                             });
 
                             status.textContent = t('bleConnecting');
+                            bleDebug('Connexion GATT...');
                             const server = await device.gatt.connect();
+                            bleDebug('GATT connecté, recherche service MIDI...');
                             const service = await server.getPrimaryService('03b80e5a-ede8-4b33-a751-6ce34ec4c700');
+                            bleDebug('Service trouvé, ouverture characteristic...');
                             bleMidiCharacteristic = await service.getCharacteristic('7772e5db-3868-4112-a1a9-f2669d106bf3');
 
                             await bleMidiCharacteristic.startNotifications();
                             bleMidiCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
                                 const data = event.target.value;
+                                const hex = Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+                                bleDebug('RX: ' + hex);
                                 if (onBLEMidiReceive) onBLEMidiReceive(data);
                             });
+                            bleDebug('Prêt ! Notifications activées.');
 
                             midiOutput = {
                                 name: device.name || 'BLE MIDI',
                                 isBLE: true,
                                 send: async function(data) {
                                     if (!bleMidiCharacteristic) {
-                                        console.warn('BLE MIDI: no characteristic');
+                                        bleDebug('ERROR: no characteristic');
                                         return;
                                     }
                                     const header = 0x80;
                                     const tsLow = 0x00;
                                     const packet = new Uint8Array([header, tsLow, ...data]);
-                                    console.log('BLE MIDI send:', Array.from(packet).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+                                    const hex = Array.from(packet).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+                                    bleDebug('TX: ' + hex);
                                     try {
                                         await bleMidiCharacteristic.writeValueWithoutResponse(packet);
+                                        bleDebug('TX OK (no response)');
                                     } catch(e) {
-                                        console.warn('BLE MIDI writeWithoutResponse failed, trying withResponse:', e.message);
+                                        bleDebug('TX fail: ' + e.message + ' → retrying with response');
                                         try {
                                             await bleMidiCharacteristic.writeValueWithResponse(packet);
+                                            bleDebug('TX OK (with response)');
                                         } catch(e2) {
-                                            console.error('BLE MIDI writeWithResponse also failed:', e2.message);
+                                            bleDebug('TX FAIL: ' + e2.message);
                                         }
                                     }
                                 }
@@ -1302,8 +1320,10 @@
 
                         } catch (err) {
                             if (err.name === 'NotFoundError') {
+                                bleDebug('Recherche annulée');
                                 status.textContent = '';
                             } else {
+                                bleDebug('ERREUR: ' + err.message);
                                 status.textContent = t('bleError') + ': ' + err.message;
                                 console.error('BLE error:', err);
                             }
