@@ -905,7 +905,8 @@
                 bleSelect: 'Choisir un appareil :',
                 bleConnect: 'Connecter',
                 bleCancel: 'Annuler',
-                bleBluetoothOff: 'Le Bluetooth est d\u00e9sactiv\u00e9. Voulez-vous l\'activer ?'
+                bleBluetoothOff: 'Le Bluetooth est d\u00e9sactiv\u00e9. Voulez-vous l\'activer ?',
+                bleInstructions: 'Ouvrez les r\u00e9glages Bluetooth de votre appareil et jumelez votre r\u00e9cepteur BLE MIDI. Une fois appair\u00e9, il appara\u00eetra automatiquement dans la liste des devices.'
             },
             en: {
                 device: 'Device:',
@@ -953,7 +954,8 @@
                 bleSelect: 'Select a device:',
                 bleConnect: 'Connect',
                 bleCancel: 'Cancel',
-                bleBluetoothOff: 'Bluetooth is disabled. Do you want to enable it?'
+                bleBluetoothOff: 'Bluetooth is disabled. Do you want to enable it?',
+                bleInstructions: 'Open your device\'s Bluetooth settings and pair your BLE MIDI receiver. Once paired, it will automatically appear in the device list.'
             }
         };
 
@@ -1018,7 +1020,6 @@
         let justDragged = false;
         let activePresetBank = -1;
         let activePresetSlot = '';
-        let bleDeviceName = null;
 
         // --- State ---
         let state = loadState();
@@ -1140,15 +1141,7 @@
                         });
 
                         let found = false;
-                        if (bleDeviceName) {
-                            const idx = outputs.findIndex(o => o.name === bleDeviceName);
-                            if (idx >= 0) {
-                                select.value = idx;
-                                midiOutput = outputs[idx];
-                                found = true;
-                                updateMIDIStatus(true);
-                            }
-                        } else if (prevDevice) {
+                        if (prevDevice) {
                             const idx = outputs.findIndex(o => o.name === prevDevice);
                             if (idx >= 0) {
                                 select.value = idx;
@@ -1174,20 +1167,6 @@
                             startBLESearch(midiAccess, select);
                             return;
                         }
-                        if (select.value === 'ble-bt-device') {
-                            const deviceName = select.options[select.selectedIndex].textContent.replace(' 📡', '');
-                            for (const out of midiAccess.outputs.values()) {
-                                if (out.name === deviceName || (out.device && out.device.name === deviceName)) {
-                                    midiOutput = out;
-                                    updateMIDIStatus(true);
-                                    state.midi.device = out.name;
-                                    saveState();
-                                    return;
-                                }
-                            }
-                            updateMIDIStatus(false);
-                            return;
-                        }
                         midiOutput = outputs[parseInt(select.value)];
                         updateMIDIStatus(true);
                         state.midi.device = midiOutput.name;
@@ -1196,63 +1175,33 @@
                 }
 
                 async function startBLESearch(midiAccess, select) {
-                    if (!navigator.bluetooth) {
-                        alert('Web Bluetooth n\'est pas supporté sur ce navigateur.');
-                        select.value = 0;
-                        return;
-                    }
-
                     const overlay = document.getElementById('ble-overlay');
                     const deviceList = document.getElementById('ble-device-list');
                     const status = document.getElementById('ble-status');
-                    deviceList.innerHTML = '';
-                    status.textContent = t('bleScanning');
+
+                    deviceList.innerHTML = '<p style="color:#ccc;font-size:0.9em;line-height:1.5;">' + t('bleInstructions') + '</p>';
+                    status.textContent = '';
                     overlay.style.display = 'flex';
 
-                    try {
-                        const device = await navigator.bluetooth.requestDevice({
-                            filters: [{ services: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700'] }],
-                            optionalServices: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700']
-                        });
-
-                        overlay.style.display = 'none';
-
-                        if (device) {
-                            const prevBleIdx = Array.from(select.options).findIndex(o => o.value === 'ble-bt-device');
-                            if (prevBleIdx >= 0) {
-                                select.remove(prevBleIdx);
+                    if (navigator.bluetooth) {
+                        try {
+                            await navigator.bluetooth.requestDevice({
+                                filters: [{ services: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700'] }],
+                                optionalServices: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700']
+                            });
+                        } catch (err) {
+                            if (err.name === 'NotFoundError') {
+                                // User cancelled, that's fine
+                            } else {
+                                console.error('BLE error:', err);
                             }
-
-                            const opt = document.createElement('option');
-                            opt.value = 'ble-bt-device';
-                            opt.textContent = device.name + ' 📡';
-                            const searchOpt = select.querySelector('option[value="ble-search"]');
-                            select.insertBefore(opt, searchOpt);
-
-                            const idx = Array.from(select.options).indexOf(opt);
-                            select.value = idx;
-
-                            bleDeviceName = device.name;
-
-                            let matched = false;
-                            for (const out of midiAccess.outputs.values()) {
-                                if (out.name === device.name || (out.device && out.device.name === device.name)) {
-                                    midiOutput = out;
-                                    matched = true;
-                                    break;
-                                }
-                            }
-
-                            updateMIDIStatus(true);
-                            state.midi.device = device.name;
-                            saveState();
-                        }
-                    } catch (err) {
-                        overlay.style.display = 'none';
-                        if (err.name !== 'NotFoundError') {
-                            console.error('BLE search error:', err);
                         }
                     }
+
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        refreshMIDIDevices();
+                    }, 1000);
                 }
 
                 refreshMIDIDevices();
