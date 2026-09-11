@@ -1129,17 +1129,17 @@
             const midiCh = 0xB0 + ch;
 
             if (midiOutput.isBLE) {
+                let bankVal, pcVal;
                 if (pc <= 127) {
-                    bleDebug('SEND: CC#0=0 PC=' + pc);
-                    await midiOutput.send([midiCh, 0, 0]);
-                    await new Promise(r => setTimeout(r, 30));
-                    await midiOutput.send([0xC0 + ch, pc]);
+                    bankVal = 0;
+                    pcVal = pc;
                 } else {
-                    bleDebug('SEND: CC#0=1 PC=' + (pc - 128));
-                    await midiOutput.send([midiCh, 0, 1]);
-                    await new Promise(r => setTimeout(r, 30));
-                    await midiOutput.send([0xC0 + ch, pc - 128]);
+                    bankVal = 1;
+                    pcVal = pc - 128;
                 }
+                const packet = [midiCh, 0, bankVal, 0xC0 + ch, pcVal];
+                bleDebug('SEND: pkt=' + packet.map(b => '0x' + b.toString(16).padStart(2,'0')).join(' '));
+                await midiOutput.send(packet);
             } else {
                 if (pc > 127) {
                     midiOutput.send([midiCh, 0, 1]);
