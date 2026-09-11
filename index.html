@@ -1262,55 +1262,29 @@
                             });
 
                             status.textContent = t('bleConnecting');
-                            bleDebug('Connexion GATT...');
-                            const server = await device.gatt.connect();
-                            bleDebug('GATT connecté');
-                            const service = await server.getPrimaryService('03b80e5a-ede8-4b33-a751-6ce34ec4c700');
-                            bleDebug('Service trouvé, listage characteristics...');
-                            const chars = await service.getCharacteristics();
-                            for (const c of chars) {
-                                const p = c.properties;
-                                bleDebug('Char: ' + c.uuid.substring(0,8) + '... W=' + p.write + ' WNR=' + p.writeWithoutResponse + ' N=' + p.notify + ' I=' + p.indicate + ' R=' + p.read);
-                            }
+                            bleDebug('GATT...');
 
-                            bleMidiCharacteristic = await service.getCharacteristic('7772e5db-3868-4112-a1a9-f2669d106bf3');
+                            let server;
+                            try { server = await device.gatt.connect(); bleDebug('GATT OK'); }
+                            catch(e) { bleDebug('GATT ERR: ' + e.message); status.textContent = 'GATT: ' + e.message; scanBtn.textContent = '🔍 ' + t('bleScan'); scanBtn.disabled = false; return; }
 
-                            const props = bleMidiCharacteristic.properties;
-                            bleDebug('Props: write=' + props.write + ' writeNoResp=' + props.writeWithoutResponse + ' notify=' + props.notify + ' indicate=' + props.indicate);
+                            let service;
+                            try { service = await server.getPrimaryService('03b80e5a-ede8-4b33-a751-6ce34ec4c700'); bleDebug('Service OK'); }
+                            catch(e) { bleDebug('Service ERR: ' + e.message); status.textContent = 'Service: ' + e.message; scanBtn.textContent = '🔍 ' + t('bleScan'); scanBtn.disabled = false; return; }
 
-                            if (props.notify || props.indicate) {
-                                try {
-                                    await bleMidiCharacteristic.startNotifications();
-                                    bleDebug('Notifications activées');
-                                    bleMidiCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-                                        const data = event.target.value;
-                                        const hex = Array.from(data).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
-                                        bleDebug('RX: ' + hex);
-                                        if (onBLEMidiReceive) onBLEMidiReceive(data);
-                                    });
-                                } catch(e) {
-                                    bleDebug('Notifications échouées: ' + e.message + ' (pas grave)');
-                                }
-                            } else {
-                                bleDebug('Pas de notifications supportées');
-                            }
-                            bleDebug('PRÊT !');
+                            try { bleMidiCharacteristic = await service.getCharacteristic('7772e5db-3868-4112-a1a9-f2669d106bf3'); const p = bleMidiCharacteristic.properties; bleDebug('Char OK WNR=' + p.writeWithoutResponse); }
+                            catch(e) { bleDebug('Char ERR: ' + e.message); status.textContent = 'Char: ' + e.message; scanBtn.textContent = '🔍 ' + t('bleScan'); scanBtn.disabled = false; return; }
+
+                            try { await bleMidiCharacteristic.startNotifications(); } catch(e) { bleDebug('Notify: ' + e.message); }
 
                             midiOutput = {
                                 name: device.name || 'BLE MIDI',
                                 isBLE: true,
                                 send: async function(data) {
                                     if (!bleMidiCharacteristic) return;
-                                    const packet = new Uint8Array([0x80, ...data]);
-                                    try {
-                                        await bleMidiCharacteristic.writeValueWithoutResponse(packet);
-                                    } catch(e) {
-                                        console.warn('BLE MIDI send error:', e);
-                                    }
+                                    try { await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array([0x80, ...data])); } catch(e) {}
                                 }
                             };
-
-                            deviceList.appendChild(info);
 
                             updateMIDIStatus(true);
                             state.midi.device = midiOutput.name;
@@ -1318,7 +1292,6 @@
                             refreshMIDIDevices();
 
                             device.addEventListener('gattserverdisconnected', () => {
-                                console.log('BLE MIDI disconnected');
                                 midiOutput = null;
                                 bleMidiCharacteristic = null;
                                 state.midi.device = '';
@@ -1327,18 +1300,13 @@
                                 refreshMIDIDevices();
                             });
 
-                            status.textContent = '✓ ' + device.name;
-                            scanBtn.textContent = '✓ ' + t('bleConnected');
-                            scanBtn.disabled = true;
+                            bleDebug('CONNECTÉ: ' + device.name);
+                            overlay.style.display = 'none';
 
                         } catch (err) {
-                            if (err.name === 'NotFoundError') {
-                                bleDebug('Recherche annulée');
-                                status.textContent = '';
-                            } else {
-                                bleDebug('ERREUR: ' + err.message);
+                            if (err.name !== 'NotFoundError') {
+                                bleDebug('ERR: ' + err.message);
                                 status.textContent = t('bleError') + ': ' + err.message;
-                                console.error('BLE error:', err);
                             }
                             scanBtn.textContent = '🔍 ' + t('bleScan');
                             scanBtn.disabled = false;
