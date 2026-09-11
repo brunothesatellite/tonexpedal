@@ -906,14 +906,17 @@
                 bleConnect: 'Connecter',
                 bleCancel: 'Annuler',
                 bleBluetoothOff: 'Le Bluetooth est d\u00e9sactiv\u00e9. Voulez-vous l\'activer ?',
-                bleInstructions: 'Ouvrez les r\u00e9glages Bluetooth de votre appareil et jumelez votre r\u00e9cepteur BLE MIDI. Une fois appair\u00e9, il appara\u00eetra automatiquement dans la liste des devices.',
+                bleInstructions: 'Si votre device BLE MIDI n\'appara\u00eet pas ci-dessus :<br>1. Ouvrez une app MIDI native (TONEX, MIDI Mobile Editor, etc.)<br>2. Connectez le device dans cette app<br>3. Revenez ici et le device sera d\u00e9tect\u00e9',
                 bleNoWebBluetooth: 'Web Bluetooth n\'est pas support\u00e9 sur ce navigateur.',
                 blePairManually: 'Appairez le device dans les r\u00e9glages Bluetooth de votre OS, puis relancez la recherche.',
                 bleScanning: 'Recherche en cours...',
                 blePaired: 'Appair\u00e9 :',
                 bleWaitingMidi: 'En attente de la d\u00e9tection MIDI...',
                 bleNotDetected: 'Device non d\u00e9tect\u00e9 comme MIDI. Veuillez l\'appairer manuellement dans les r\u00e9glages Bluetooth.',
-                bleError: 'Erreur lors de la recherche Bluetooth.'
+                bleError: 'Erreur lors de la recherche Bluetooth.',
+                bleFound: 'Devices BLE MIDI d\u00e9tect\u00e9s',
+                bleForceScan: 'Forcer la d\u00e9tection Bluetooth',
+                blePairedCheck: 'v\u00e9rifiez que le device est connect\u00e9 dans une app native'
             },
             en: {
                 device: 'Device:',
@@ -962,14 +965,17 @@
                 bleConnect: 'Connect',
                 bleCancel: 'Cancel',
                 bleBluetoothOff: 'Bluetooth is disabled. Do you want to enable it?',
-                bleInstructions: 'Open your device\'s Bluetooth settings and pair your BLE MIDI receiver. Once paired, it will automatically appear in the device list.',
+                bleInstructions: 'If your BLE MIDI device doesn\'t appear above:<br>1. Open a native MIDI app (TONEX, MIDI Mobile Editor, etc.)<br>2. Connect the device in that app<br>3. Come back here and the device will be detected',
                 bleNoWebBluetooth: 'Web Bluetooth is not supported in this browser.',
                 blePairManually: 'Pair the device in your OS Bluetooth settings, then try again.',
                 bleScanning: 'Scanning...',
                 blePaired: 'Paired:',
                 bleWaitingMidi: 'Waiting for MIDI detection...',
                 bleNotDetected: 'Device not detected as MIDI. Please pair it manually in Bluetooth settings.',
-                bleError: 'Bluetooth search error.'
+                bleError: 'Bluetooth search error.',
+                bleFound: 'BLE MIDI devices detected',
+                bleForceScan: 'Force Bluetooth detection',
+                blePairedCheck: 'make sure the device is connected in a native app'
             }
         };
 
@@ -1194,57 +1200,66 @@
                     const status = document.getElementById('ble-status');
 
                     overlay.style.display = 'flex';
+                    deviceList.innerHTML = '';
 
-                    if (!navigator.bluetooth) {
-                        deviceList.innerHTML = '<p style="color:#e67e22;font-size:0.9em;">' + t('bleNoWebBluetooth') + '</p>';
-                        status.innerHTML = t('blePairManually');
-                        return;
-                    }
+                    const outputs = Array.from(midiAccess.outputs.values());
+                    const bleDevices = outputs.filter(o => /bluetooth|ble|midi tranc/i.test(o.manufacturer + o.name));
 
-                    deviceList.innerHTML = '<p style="color:#ccc;font-size:0.9em;line-height:1.5;">' + t('bleScanning') + '</p>';
-                    status.textContent = '';
+                    if (bleDevices.length > 0) {
+                        const title = document.createElement('p');
+                        title.style.cssText = 'color:#4caf50;font-size:0.9em;margin-bottom:8px;';
+                        title.textContent = t('bleFound') + ' :';
+                        deviceList.appendChild(title);
 
-                    try {
-                        const device = await navigator.bluetooth.requestDevice({
-                            filters: [{ services: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700'] }],
-                            optionalServices: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700']
-                        });
-
-                        deviceList.innerHTML = '<p style="color:#4caf50;font-size:0.9em;">✓ ' + t('blePaired') + ' <strong>' + device.name + '</strong></p>';
-                        status.textContent = t('bleWaitingMidi');
-
-                        let attempts = 0;
-                        const checkInterval = setInterval(() => {
-                            attempts++;
-                            const outputs = Array.from(midiAccess.outputs.values());
-                            const found = outputs.find(o => o.name === device.name || (o.device && o.device.name === device.name));
-
-                            if (found) {
-                                clearInterval(checkInterval);
-                                midiOutput = found;
-                                refreshMIDIDevices();
-                                const idx = Array.from(select.options).findIndex(o => o.textContent.includes(device.name));
+                        bleDevices.forEach((out, i) => {
+                            const btn = document.createElement('button');
+                            btn.className = 'btn-save';
+                            btn.style.cssText = 'width:100%;margin:4px 0;';
+                            btn.textContent = out.name;
+                            btn.addEventListener('click', () => {
+                                midiOutput = out;
+                                const idx = Array.from(select.options).findIndex(o => o.textContent.includes(out.name));
                                 if (idx >= 0) select.value = idx;
                                 updateMIDIStatus(true);
-                                state.midi.device = found.name;
+                                state.midi.device = out.name;
                                 saveState();
-                                setTimeout(() => { overlay.style.display = 'none'; }, 500);
-                            } else if (attempts >= 20) {
-                                clearInterval(checkInterval);
-                                deviceList.innerHTML = '<p style="color:#e67e22;font-size:0.9em;">' + t('bleNotDetected') + '</p>';
-                                status.innerHTML = t('blePairManually');
-                            }
-                        }, 500);
-
-                    } catch (err) {
-                        if (err.name === 'NotFoundError') {
-                            overlay.style.display = 'none';
-                        } else {
-                            deviceList.innerHTML = '<p style="color:#e67e22;font-size:0.9em;">' + t('bleError') + '</p>';
-                            status.innerHTML = t('blePairManually');
-                            console.error('BLE error:', err);
-                        }
+                                overlay.style.display = 'none';
+                            });
+                            deviceList.appendChild(btn);
+                        });
                     }
+
+                    const info = document.createElement('p');
+                    info.style.cssText = 'color:#999;font-size:0.85em;line-height:1.5;margin-top:12px;';
+                    info.innerHTML = t('bleInstructions');
+                    deviceList.appendChild(info);
+
+                    if (navigator.bluetooth) {
+                        const scanBtn = document.createElement('button');
+                        scanBtn.className = 'btn-cancel';
+                        scanBtn.style.cssText = 'width:100%;margin-top:8px;';
+                        scanBtn.textContent = t('bleForceScan');
+                        scanBtn.addEventListener('click', async () => {
+                            scanBtn.textContent = t('bleScanning');
+                            scanBtn.disabled = true;
+                            try {
+                                const device = await navigator.bluetooth.requestDevice({
+                                    filters: [{ services: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700'] }],
+                                    optionalServices: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700']
+                                });
+                                status.textContent = '✓ ' + device.name + ' - ' + t('blePairedCheck');
+                            } catch (err) {
+                                if (err.name !== 'NotFoundError') {
+                                    status.textContent = t('bleError') + ': ' + err.message;
+                                }
+                            }
+                            scanBtn.textContent = t('bleForceScan');
+                            scanBtn.disabled = false;
+                        });
+                        deviceList.appendChild(scanBtn);
+                    }
+
+                    status.textContent = '';
                 }
 
                 refreshMIDIDevices();
