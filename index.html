@@ -1127,13 +1127,26 @@
             const pc = pcFromBankSlot(bank, slot);
             const ch = midiChannel;
             const midiCh = 0xB0 + ch;
-            const bankVal = pc > 127 ? 1 : 0;
-            const pcVal = pc > 127 ? pc - 128 : pc;
 
             if (midiOutput.isBLE) {
-                const packet = [0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal];
-                bleDebug('SEND: bank=' + bank + ' slot=' + slot + ' pc=' + pc + ' packet=' + packet.map(b => '0x' + b.toString(16).padStart(2,'0')).join(' '));
+                let packet;
+                if (pc <= 127) {
+                    packet = [0x80, midiCh, 0, 0, 0x80, 0xC0 + ch, pc];
+                } else {
+                    packet = [0x80, midiCh, 32, 1, 0x80, 0xC0 + ch, pc - 128];
+                }
+                bleDebug('SEND: pc=' + pc + ' pkt=' + packet.map(b => '0x' + b.toString(16).padStart(2,'0')).join(' '));
                 await midiOutput.send(packet);
+            } else {
+                const fullPc = bank * 3 + slotIndex;
+                if (fullPc > 127) {
+                    midiOutput.send([midiCh, 0, 1]);
+                    setTimeout(() => { midiOutput.send([0xC0 + ch, fullPc - 128]); }, 30);
+                } else {
+                    midiOutput.send([midiCh, 0, 0]);
+                    setTimeout(() => { midiOutput.send([0xC0 + ch, fullPc]); }, 30);
+                }
+            }
             } else {
                 if (pc > 127) {
                     midiOutput.send([midiCh, 0, 1]);
