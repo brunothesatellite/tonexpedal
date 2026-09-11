@@ -849,12 +849,12 @@
             <h3 id="ble-title" data-i18n="bleSelect">Choisir un appareil :</h3>
             <div id="ble-device-list" style="max-height:200px;overflow-y:auto;margin:12px 0;"></div>
             <p id="ble-status" style="color:#999;font-size:0.85em;text-align:center;"></p>
-            <div id="ble-debug" style="display:none;background:#111;color:#0f0;font-family:monospace;font-size:0.75em;padding:8px;border-radius:4px;margin-top:8px;max-height:150px;overflow-y:auto;white-space:pre-wrap;"></div>
             <div class="btn-row">
                 <button class="btn-cancel" id="ble-cancel" data-i18n="bleCancel">Annuler</button>
             </div>
         </div>
     </div>
+    <div id="ble-debug" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#111;color:#0f0;font-family:monospace;font-size:0.7em;padding:8px;z-index:9999;max-height:120px;overflow-y:auto;white-space:pre-wrap;border-top:2px solid #0f0;"></div>
 
     <script>
     (function() {
@@ -915,7 +915,8 @@
                 bleScanning: 'Recherche en cours...',
                 bleConnecting: 'Connexion...',
                 bleNoWebBluetooth: 'Web Bluetooth n\'est pas support\u00e9 sur ce navigateur.',
-                bleError: 'Erreur Bluetooth.'
+                bleError: 'Erreur Bluetooth.',
+                bleConnected: 'Connecté !'
             },
             en: {
                 device: 'Device:',
@@ -972,7 +973,8 @@
                 bleScanning: 'Scanning...',
                 bleConnecting: 'Connecting...',
                 bleNoWebBluetooth: 'Web Bluetooth is not supported in this browser.',
-                bleError: 'Bluetooth error.'
+                bleError: 'Bluetooth error.',
+                bleConnected: 'Connected!'
             }
         };
 
@@ -1042,6 +1044,10 @@
             const time = new Date().toLocaleTimeString();
             el.textContent = '[' + time + '] ' + msg + '\n' + el.textContent;
         }
+
+        document.getElementById('ble-debug').addEventListener('click', () => {
+            document.getElementById('ble-debug').style.display = 'none';
+        });
         let activePresetPC = -1;
         let editingButtonSlot = null;
         let justDragged = false;
@@ -1251,7 +1257,7 @@
 
                         try {
                             const device = await navigator.bluetooth.requestDevice({
-                                acceptAllDevices: true,
+                                filters: [{ services: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700'] }],
                                 optionalServices: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700']
                             });
 
@@ -1316,7 +1322,8 @@
                             });
 
                             status.textContent = '✓ ' + device.name;
-                            setTimeout(() => { overlay.style.display = 'none'; }, 500);
+                            scanBtn.textContent = '✓ ' + t('bleConnected');
+                            scanBtn.disabled = true;
 
                         } catch (err) {
                             if (err.name === 'NotFoundError') {
