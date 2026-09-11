@@ -177,24 +177,6 @@
 
         tr:nth-child(even) { background: rgba(22, 27, 34, 0.5); }
 
-        .badge-demo {
-            display: inline-flex;
-            gap: 6px;
-            margin: 4px 0;
-        }
-
-        .badge-demo span {
-            font-size: 0.75em;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-
-        .b-amp-on { background: var(--green); color: #000; }
-        .b-amp-off { background: #333; color: #666; }
-        .b-cab-on { background: var(--blue); color: #000; }
-        .b-cab-off { background: #333; color: #666; }
-
         .arch-diagram {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -324,12 +306,12 @@
 
     <h2 id="h-features">Fonctionnalités</h2>
     <ul id="features-list">
-        <li><strong data-t="feat-grid">Grille 3×3</strong> <span data-t="feat-grid-desc">de presets assignables avec noms et badges AMP/CAB</span></li>
+        <li><strong data-t="feat-grid">Grille 3×3</strong> <span data-t="feat-grid-desc">de presets assignables avec noms</span></li>
         <li><strong data-t="feat-lib">Bibliothèque complète</strong> <span data-t="feat-lib-desc">des 150 presets (50 banks × 3 slots A/B/C)</span></li>
-        <li><strong data-t="feat-sync">Synchronisation USB</strong> — <span data-t="feat-sync-desc">lecture de tous les noms et flags AMP/CAB via USB CDC série</span></li>
+        <li><strong data-t="feat-sync">Synchronisation USB</strong> — <span data-t="feat-sync-desc">lecture de tous les noms via USB CDC série</span></li>
         <li><strong data-t="feat-midi">Contrôle MIDI</strong> — <span data-t="feat-midi-desc">Bank Select + Program Change pour changer de preset</span></li>
         <li><strong data-t="feat-drag">Glisser-déposer</strong> — <span data-t="feat-drag-desc">assigner, swap, supprimer via corbeille</span></li>
-        <li><strong data-t="feat-edit">Édition</strong> — <span data-t="feat-edit-desc">double-clic pour renommer et toggler AMP/CAB</span></li>
+        <li><strong data-t="feat-edit">Édition</strong> — <span data-t="feat-edit-desc">double-clic pour renommer</span></li>
         <li><strong data-t="feat-search">Recherche</strong> <span data-t="feat-search-desc">filtrante dans la bibliothèque</span></li>
         <li><strong data-t="feat-persist">Persistance</strong> — <span data-t="feat-persist-desc">configuration sauvegardée en localStorage</span></li>
         <li><strong data-t="feat-export">Export/Import JSON</strong> — <span data-t="feat-export-desc">exporte les noms de presets vers un fichier, importe sur une autre config</span></li>
@@ -382,11 +364,11 @@ python -m http.server 3000</code></pre>
         <li data-t="usage-sync-1">Cliquer sur <strong>Sync USB</strong></li>
         <li data-t="usage-sync-2">Sélectionner le port série TONEX Pedal</li>
         <li data-t="usage-sync-3">La progression s'affiche : Hello → State → 150 presets</li>
-        <li data-t="usage-sync-4">Les noms et badges AMP/CAB se remplissent automatiquement</li>
+        <li data-t="usage-sync-4">Les noms se remplissent automatiquement</li>
     </ol>
 
     <div class="info">
-        <strong>Info :</strong> <span data-t="usage-sync-info">Le sync lit les noms, l'état AMP (active/désactivé) et le type de CAB (VIR, Tone Model, ou désactivé) pour chaque preset.</span>
+        <strong>Info :</strong> <span data-t="usage-sync-info">Le sync lit les noms de chaque preset.</span>
     </div>
 
     <h3 data-t="usage-interact-title">Interactions</h3>
@@ -397,27 +379,12 @@ python -m http.server 3000</code></pre>
         <tr><td data-t="act-drag-lib">Glisser un preset de la bibliothèque → grille</td><td data-t="act-drag-lib-desc">Assigne le preset au bouton</td></tr>
         <tr><td data-t="act-drag-swap">Glisser un bouton → un autre bouton</td><td data-t="act-drag-swap-desc">Swap les positions</td></tr>
         <tr><td data-t="act-drag-trash">Glisser un bouton → corbeille</td><td data-t="act-drag-trash-desc">Vide le bouton</td></tr>
-        <tr><td data-t="act-dblclick">Double-clic sur un bouton ou preset</td><td data-t="act-dblclick-desc">Ouvre le modal d'édition (nom, AMP, CAB)</td></tr>
+        <tr><td data-t="act-dblclick">Double-clic sur un bouton ou preset</td><td data-t="act-dblclick-desc">Ouvre le modal d'édition (nom)</td></tr>
         <tr><td data-t="act-search">Taper dans la barre de recherche</td><td data-t="act-search-desc">Filtre la bibliothèque par nom ou numéro</td></tr>
         <tr><td data-t="act-export">Cliquer sur ⬇ JSON</td><td data-t="act-export-desc">Exporte les noms de presets en fichier JSON</td></tr>
         <tr><td data-t="act-import">Cliquer sur ⬆ JSON</td><td data-t="act-import-desc">Importe un fichier JSON de presets (valide et remplace les noms)</td></tr>
         <tr><td data-t="act-toggle">Cliquer sur le chevron (▶/◀)</td><td data-t="act-toggle-desc">Minimise/étend la bibliothèque de presets</td></tr>
     </table>
-
-    <h3 data-t="badges-title">Badges AMP/CAB</h3>
-    <p data-t="badges-desc">Chaque preset affiche deux badges indiquant son état :</p>
-    <div class="badge-demo">
-        <span class="b-amp-on">AMP</span> <span data-t="badges-amp-on">= Amplificateur actif</span>
-    </div>
-    <div class="badge-demo">
-        <span class="b-amp-off">AMP</span> <span data-t="badges-amp-off">= Amplificateur désactivé</span>
-    </div>
-    <div class="badge-demo">
-        <span class="b-cab-on">CAB</span> <span data-t="badges-cab-on">= Cabinet actif (VIR ou Tone Model)</span>
-    </div>
-    <div class="badge-demo">
-        <span class="b-cab-off">CAB</span> <span data-t="badges-cab-off">= Cabinet désactivé</span>
-    </div>
 
     <h2 id="h-arch">Architecture technique</h2>
 
@@ -589,7 +556,6 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
         <tr><td data-t="ts-no-serial">Web Serial indisponible</td><td data-t="ts-no-serial-sol">Chrome 89+ ou Edge 89+. Vérifier HTTPS/localhost</td></tr>
         <tr><td data-t="ts-sync-fail">Sync USB échoue</td><td data-t="ts-sync-fail-sol">Fermer IK Tonex et tout logiciel utilisant le port série</td></tr>
         <tr><td data-t="ts-no-names">Noms ne s'affichent pas</td><td data-t="ts-no-names-sol">Relancer Sync USB. Console F12 pour erreurs</td></tr>
-        <tr><td data-t="ts-grey-badges">AMP/CAB toujours gris</td><td data-t="ts-grey-badges-sol">Console F12 : vérifier les float32 lus (log des 3 premiers presets)</td></tr>
         <tr><td data-t="ts-empty">Page vide après chargement</td><td data-t="ts-empty-sol">Recharger. Vider localStorage si corrompu</td></tr>
         <tr><td data-t="ts-android-sync">Android : Sync ne lit pas les données</td><td data-t="ts-android-sync-sol">Le fallback WebUSB devrait s'activer automatiquement. Vérifier les logs d'interface/endpoint dans la console</td></tr>
     </table>
@@ -616,12 +582,12 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'cap-fig-android': 'Interface complète — Android',
             'cap-fig-videos': 'Démonstrations vidéo — PC & Android',
             'h-features': 'Fonctionnalités',
-            'feat-grid': 'Grille 3×3', 'feat-grid-desc': 'de presets assignables avec noms et badges AMP/CAB',
+            'feat-grid': 'Grille 3×3', 'feat-grid-desc': 'de presets assignables avec noms',
             'feat-lib': 'Bibliothèque complète', 'feat-lib-desc': 'des 150 presets (50 banks × 3 slots A/B/C)',
-            'feat-sync': 'Synchronisation USB', 'feat-sync-desc': 'lecture de tous les noms et flags AMP/CAB via USB CDC série',
+            'feat-sync': 'Synchronisation USB', 'feat-sync-desc': 'lecture de tous les noms via USB CDC série',
             'feat-midi': 'Contrôle MIDI', 'feat-midi-desc': 'Bank Select + Program Change pour changer de preset',
             'feat-drag': 'Glisser-déposer', 'feat-drag-desc': 'assigner, swap, supprimer via corbeille',
-            'feat-edit': 'Édition', 'feat-edit-desc': 'double-clic pour renommer et toggler AMP/CAB',
+            'feat-edit': 'Édition', 'feat-edit-desc': 'double-clic pour renommer',
             'feat-search': 'Recherche', 'feat-search-desc': 'filtrante dans la bibliothèque',
             'feat-persist': 'Persistance', 'feat-persist-desc': 'configuration sauvegardée en localStorage',
             'feat-export': 'Export/Import JSON', 'feat-export-desc': 'exporte les noms de presets vers un fichier, importe sur une autre config',
@@ -650,8 +616,8 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'usage-sync-1': 'Cliquer sur <strong>Sync USB</strong>',
             'usage-sync-2': 'Sélectionner le port série TONEX Pedal',
             'usage-sync-3': 'La progression s\'affiche : Hello → State → 150 presets',
-            'usage-sync-4': 'Les noms et badges AMP/CAB se remplissent automatiquement',
-            'usage-sync-info': 'Le sync lit les noms, l\'état AMP (active/désactivé) et le type de CAB (VIR, Tone Model, ou désactivé) pour chaque preset.',
+            'usage-sync-4': 'Les noms se remplissent automatiquement',
+            'usage-sync-info': 'Le sync lit les noms de chaque preset.',
             'usage-interact-title': 'Interactions',
             'th-action': 'Action', 'th-result': 'Résultat',
             'act-click-btn': 'Clic simple sur un bouton', 'act-click-btn-desc': 'Envoie Bank Select + Program Change au pédalier',
@@ -659,15 +625,11 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'act-drag-lib': 'Glisser un preset de la bibliothèque → grille', 'act-drag-lib-desc': 'Assigne le preset au bouton',
             'act-drag-swap': 'Glisser un bouton → un autre bouton', 'act-drag-swap-desc': 'Swap les positions',
             'act-drag-trash': 'Glisser un bouton → corbeille', 'act-drag-trash-desc': 'Vide le bouton',
-            'act-dblclick': 'Double-clic sur un bouton ou preset', 'act-dblclick-desc': 'Ouvre le modal d\'édition (nom, AMP, CAB)',
+            'act-dblclick': 'Double-clic sur un bouton ou preset', 'act-dblclick-desc': 'Ouvre le modal d\'édition (nom)',
             'act-search': 'Taper dans la barre de recherche', 'act-search-desc': 'Filtre la bibliothèque par nom ou numéro',
             'act-export': 'Cliquer sur ⬇ JSON', 'act-export-desc': 'Exporte les noms de presets en fichier JSON',
             'act-import': 'Cliquer sur ⬆ JSON', 'act-import-desc': 'Importe un fichier JSON de presets (valide et remplace les noms)',
             'act-toggle': 'Cliquer sur le chevron (▶/◀)', 'act-toggle-desc': 'Minimise/étend la bibliothèque de presets',
-            'badges-title': 'Badges AMP/CAB',
-            'badges-desc': 'Chaque preset affiche deux badges indiquant son état :',
-            'badges-amp-on': '= Amplificateur actif', 'badges-amp-off': '= Amplificateur désactivé',
-            'badges-cab-on': '= Cabinet actif (VIR ou Tone Model)', 'badges-cab-off': '= Cabinet désactivé',
             'h-arch': 'Architecture technique',
             'h-midi-proto': 'Protocole MIDI',
             'midi-mapping-title': 'Mapping presets', 'midi-mapping-desc': 'Le TONEX Pedal utilise 50 banks × 3 slots (A/B/C) = 150 presets.',
@@ -721,7 +683,6 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'ts-no-serial': 'Web Serial indisponible', 'ts-no-serial-sol': 'Chrome 89+ ou Edge 89+. Vérifier HTTPS/localhost',
             'ts-sync-fail': 'Sync USB échoue', 'ts-sync-fail-sol': 'Fermer IK Tonex et tout logiciel utilisant le port série',
             'ts-no-names': 'Noms ne s\'affichent pas', 'ts-no-names-sol': 'Relancer Sync USB. Console F12 pour erreurs',
-            'ts-grey-badges': 'AMP/CAB toujours gris', 'ts-grey-badges-sol': 'Console F12 : vérifier les float32 lus (log des 3 premiers presets)',
             'ts-empty': 'Page vide après chargement', 'ts-empty-sol': 'Recharger. Vider localStorage si corrompu',
             'ts-android-sync': 'Android : Sync ne lit pas les données', 'ts-android-sync-sol': 'Le fallback WebUSB devrait s\'activer automatiquement. Vérifier les logs d\'interface/endpoint dans la console',
             'h-credits': 'Crédits',
@@ -736,12 +697,12 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'cap-fig-android': 'Full interface — Android',
             'cap-fig-videos': 'Video demonstrations — PC & Android',
             'h-features': 'Features',
-            'feat-grid': '3×3 Grid', 'feat-grid-desc': 'of assignable presets with names and AMP/CAB badges',
+            'feat-grid': '3×3 Grid', 'feat-grid-desc': 'of assignable presets with names',
             'feat-lib': 'Full library', 'feat-lib-desc': 'of 150 presets (50 banks × 3 slots A/B/C)',
-            'feat-sync': 'USB Sync', 'feat-sync-desc': 'reads all names and AMP/CAB flags via USB CDC serial',
+            'feat-sync': 'USB Sync', 'feat-sync-desc': 'reads all names via USB CDC serial',
             'feat-midi': 'MIDI Control', 'feat-midi-desc': 'Bank Select + Program Change to change presets',
             'feat-drag': 'Drag & drop', 'feat-drag-desc': 'assign, swap, delete via trash',
-            'feat-edit': 'Editing', 'feat-edit-desc': 'double-click to rename and toggle AMP/CAB',
+            'feat-edit': 'Editing', 'feat-edit-desc': 'double-click to rename',
             'feat-search': 'Search', 'feat-search-desc': 'filtering in the library',
             'feat-persist': 'Persistence', 'feat-persist-desc': 'configuration saved in localStorage',
             'feat-export': 'Export/Import JSON', 'feat-export-desc': 'export preset names to a file, import on another setup',
@@ -770,8 +731,8 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'usage-sync-1': 'Click <strong>Sync USB</strong>',
             'usage-sync-2': 'Select the TONEX Pedal serial port',
             'usage-sync-3': 'Progress shows: Hello → State → 150 presets',
-            'usage-sync-4': 'Names and AMP/CAB badges fill automatically',
-            'usage-sync-info': 'Sync reads names, AMP state (on/off), and CAB type (VIR, Tone Model, or off) for each preset.',
+            'usage-sync-4': 'Names fill automatically',
+            'usage-sync-info': 'Sync reads names for each preset.',
             'usage-interact-title': 'Interactions',
             'th-action': 'Action', 'th-result': 'Result',
             'act-click-btn': 'Click a button', 'act-click-btn-desc': 'Sends Bank Select + Program Change to the pedal',
@@ -779,15 +740,11 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'act-drag-lib': 'Drag preset from library → grid', 'act-drag-lib-desc': 'Assigns the preset to the button',
             'act-drag-swap': 'Drag a button → another button', 'act-drag-swap-desc': 'Swaps positions',
             'act-drag-trash': 'Drag a button → trash', 'act-drag-trash-desc': 'Clears the button',
-            'act-dblclick': 'Double-click a button or preset', 'act-dblclick-desc': 'Opens edit modal (name, AMP, CAB)',
+            'act-dblclick': 'Double-click a button or preset', 'act-dblclick-desc': 'Opens edit modal (name)',
             'act-search': 'Type in the search bar', 'act-search-desc': 'Filters the library by name or number',
             'act-export': 'Click ⬇ JSON', 'act-export-desc': 'Exports preset names to a JSON file',
             'act-import': 'Click ⬆ JSON', 'act-import-desc': 'Imports a JSON preset file (validates and replaces names)',
             'act-toggle': 'Click the chevron (▶/◀)', 'act-toggle-desc': 'Minimizes/expands the preset library',
-            'badges-title': 'AMP/CAB Badges',
-            'badges-desc': 'Each preset shows two badges indicating its state:',
-            'badges-amp-on': '= Amplifier active', 'badges-amp-off': '= Amplifier disabled',
-            'badges-cab-on': '= Cabinet active (VIR or Tone Model)', 'badges-cab-off': '= Cabinet disabled',
             'h-arch': 'Technical Architecture',
             'h-midi-proto': 'MIDI Protocol',
             'midi-mapping-title': 'Preset mapping', 'midi-mapping-desc': 'The TONEX Pedal uses 50 banks × 3 slots (A/B/C) = 150 presets.',
@@ -841,7 +798,6 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'ts-no-serial': 'Web Serial unavailable', 'ts-no-serial-sol': 'Chrome 89+ or Edge 89+. Check HTTPS/localhost',
             'ts-sync-fail': 'USB Sync fails', 'ts-sync-fail-sol': 'Close IK Tonex and any app using the serial port',
             'ts-no-names': 'Names don\'t appear', 'ts-no-names-sol': 'Re-run Sync USB. Console F12 for errors',
-            'ts-grey-badges': 'AMP/CAB always grey', 'ts-grey-badges-sol': 'Console F12: check float32 values (log for first 3 presets)',
             'ts-empty': 'Page empty after load', 'ts-empty-sol': 'Reload. Clear localStorage if corrupted',
             'ts-android-sync': 'Android: Sync doesn\'t read data', 'ts-android-sync-sol': 'WebUSB fallback should auto-activate. Check interface/endpoint logs in console',
             'h-credits': 'Credits',

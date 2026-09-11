@@ -18,9 +18,9 @@ Android demo vido:
 
 ## Features
 
-- **3×3 Grid** of assignable presets with names and AMP/CAB badges
+- **3×3 Grid** of assignable presets with names
 - **Full library** of 150 presets (50 banks × 3 slots A/B/C)
-- **USB Sync** — reads all names and AMP/CAB flags directly from the pedal
+- **USB Sync** — reads all names directly from the pedal
 - **MIDI Control** — sends Bank Select + Program Change to change presets
 - **Drag & drop** — assign a preset to a button, swap between buttons, or delete via trash
 - **Editing** — double-click to rename a preset and toggle AMP/CAB
@@ -81,7 +81,7 @@ Simply double-click `index.html` or open it via `file:///` in your browser.
 1. Click **Sync USB**
 2. Select the TONEX Pedal serial port in the dialog
 3. Progress shows: Hello → State → Reading 150 presets
-4. Names and AMP/CAB badges fill in automatically
+4. Names fill in automatically
 5. Button shows **Done! X/150 presets read**
 
 ### Export / Import JSON
@@ -104,12 +104,12 @@ JSON format:
 - **Drag** a preset from the library → assigns to the button
 - **Drag** a button to another → swaps positions
 - **Drag** a button to the trash → clears the button
-- **Double-click** → opens edit modal (name, AMP, CAB)
+- **Double-click** → opens edit modal (name)
 
 ### Library
 
 - **Single click** → sends MIDI to audition the preset
-- **Double-click** → edits name and AMP/CAB flags
+- **Double-click** → edits name
 - **Search** → filters by name or bank/slot number
 - **Drag** to grid → assigns the preset
 - **Chevron toggle** (▶/◀) on the panel border → minimizes/expands the library
