@@ -1206,16 +1206,21 @@
                             const searchOpt = select.querySelector('option[value="ble-search"]');
                             select.insertBefore(opt, searchOpt);
 
+                            let matched = false;
                             for (const out of midiAccess.outputs.values()) {
                                 if (out.name === device.name || (out.device && out.device.name === device.name)) {
                                     midiOutput = out;
-                                    const idx = Array.from(select.options).indexOf(opt);
-                                    select.value = idx;
-                                    updateMIDIStatus(true);
-                                    state.midi.device = out.name;
-                                    saveState();
+                                    matched = true;
                                     break;
                                 }
+                            }
+
+                            const idx = Array.from(select.options).indexOf(opt);
+                            select.value = idx;
+                            updateMIDIStatus(true);
+                            if (matched) {
+                                state.midi.device = device.name;
+                                saveState();
                             }
                         }
                     } catch (err) {
@@ -1224,8 +1229,6 @@
                             console.error('BLE search error:', err);
                         }
                     }
-
-                    select.value = select.options.length > 0 ? 0 : 'ble-search';
                 }
 
                 refreshMIDIDevices();
