@@ -844,6 +844,17 @@
         </div>
     </div>
 
+    <div class="edit-overlay" id="ble-overlay" style="display:none">
+        <div class="edit-modal">
+            <h3 id="ble-title" data-i18n="bleSelect">Choisir un appareil :</h3>
+            <div id="ble-device-list" style="max-height:200px;overflow-y:auto;margin:12px 0;"></div>
+            <p id="ble-status" style="color:#999;font-size:0.85em;text-align:center;"></p>
+            <div class="btn-row">
+                <button class="btn-cancel" id="ble-cancel" data-i18n="bleCancel">Annuler</button>
+            </div>
+        </div>
+    </div>
+
     <script>
     (function() {
         // --- Translations ---
@@ -887,7 +898,14 @@
                 importConfirmTitle: 'Restaurer la configuration des tuiles ?',
                 importConfirmDesc: 'Ce fichier contient la configuration de la grille (presets assign\u00e9s et couleurs). Voulez-vous la restaurer ?',
                 importConfirmYes: 'Oui, tout restaurer',
-                importConfirmNo: 'Non, presets uniquement'
+                importConfirmNo: 'Non, presets uniquement',
+                bleSearch: 'Chercher un appareil BLE MIDI...',
+                bleScanning: 'Recherche en cours...',
+                bleNoDevice: 'Aucun appareil trouv\u00e9',
+                bleSelect: 'Choisir un appareil :',
+                bleConnect: 'Connecter',
+                bleCancel: 'Annuler',
+                bleBluetoothOff: 'Le Bluetooth est d\u00e9sactiv\u00e9. Voulez-vous l\'activer ?'
             },
             en: {
                 device: 'Device:',
@@ -928,7 +946,14 @@
                 importConfirmTitle: 'Restore grid configuration?',
                 importConfirmDesc: 'This file contains grid configuration (assigned presets and colors). Do you want to restore it?',
                 importConfirmYes: 'Yes, restore all',
-                importConfirmNo: 'No, presets only'
+                importConfirmNo: 'No, presets only',
+                bleSearch: 'Search for BLE MIDI device...',
+                bleScanning: 'Scanning...',
+                bleNoDevice: 'No device found',
+                bleSelect: 'Select a device:',
+                bleConnect: 'Connect',
+                bleCancel: 'Cancel',
+                bleBluetoothOff: 'Bluetooth is disabled. Do you want to enable it?'
             }
         };
 
@@ -1104,39 +1129,103 @@
                         select.appendChild(opt);
                         midiOutput = null;
                         updateMIDIStatus(false);
-                        return;
+                    } else {
+                        outputs.forEach((out, i) => {
+                            const opt = document.createElement('option');
+                            opt.value = i;
+                            const isBluetooth = out.type === 'output' && /bluetooth|ble/i.test(out.manufacturer + out.name);
+                            opt.textContent = out.name + (isBluetooth ? ' 📡' : '');
+                            select.appendChild(opt);
+                        });
+
+                        let found = false;
+                        if (prevDevice) {
+                            const idx = outputs.findIndex(o => o.name === prevDevice);
+                            if (idx >= 0) {
+                                select.value = idx;
+                                midiOutput = outputs[idx];
+                                found = true;
+                            }
+                        }
+                        if (!found && outputs.length > 0) {
+                            midiOutput = outputs[0];
+                            select.value = 0;
+                        }
+                        updateMIDIStatus(!!midiOutput);
                     }
 
-                    outputs.forEach((out, i) => {
-                        const opt = document.createElement('option');
-                        opt.value = i;
-                        const isBluetooth = out.type === 'output' && /bluetooth|ble/i.test(out.manufacturer + out.name);
-                        opt.textContent = out.name + (isBluetooth ? ' 📡' : '');
-                        select.appendChild(opt);
-                    });
+                    const bleOpt = document.createElement('option');
+                    bleOpt.value = 'ble-search';
+                    bleOpt.textContent = '📡 ' + t('bleSearch');
+                    select.appendChild(bleOpt);
 
                     select.onchange = null;
                     select.addEventListener('change', () => {
+                        if (select.value === 'ble-search') {
+                            startBLESearch(midiAccess, select);
+                            return;
+                        }
                         midiOutput = outputs[parseInt(select.value)];
                         updateMIDIStatus(true);
                         state.midi.device = midiOutput.name;
                         saveState();
                     });
+                }
 
-                    let found = false;
-                    if (prevDevice) {
-                        const idx = outputs.findIndex(o => o.name === prevDevice);
-                        if (idx >= 0) {
-                            select.value = idx;
-                            midiOutput = outputs[idx];
-                            found = true;
+                async function startBLESearch(midiAccess, select) {
+                    if (!navigator.bluetooth) {
+                        alert('Web Bluetooth n\'est pas supporté sur ce navigateur.');
+                        select.value = 0;
+                        return;
+                    }
+
+                    const overlay = document.getElementById('ble-overlay');
+                    const deviceList = document.getElementById('ble-device-list');
+                    const status = document.getElementById('ble-status');
+                    deviceList.innerHTML = '';
+                    status.textContent = t('bleScanning');
+                    overlay.style.display = 'flex';
+
+                    try {
+                        const device = await navigator.bluetooth.requestDevice({
+                            filters: [{ services: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700'] }],
+                            optionalServices: ['03b80e5a-ede8-4b33-a751-6ce34ec4c700']
+                        });
+
+                        overlay.style.display = 'none';
+
+                        if (device) {
+                            const prevBleIdx = Array.from(select.options).findIndex(o => o.value === 'ble-bt-device');
+                            if (prevBleIdx >= 0) {
+                                select.remove(prevBleIdx);
+                            }
+
+                            const opt = document.createElement('option');
+                            opt.value = 'ble-bt-device';
+                            opt.textContent = device.name + ' 📡';
+                            const searchOpt = select.querySelector('option[value="ble-search"]');
+                            select.insertBefore(opt, searchOpt);
+
+                            for (const out of midiAccess.outputs.values()) {
+                                if (out.name === device.name || (out.device && out.device.name === device.name)) {
+                                    midiOutput = out;
+                                    const idx = Array.from(select.options).indexOf(opt);
+                                    select.value = idx;
+                                    updateMIDIStatus(true);
+                                    state.midi.device = out.name;
+                                    saveState();
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        overlay.style.display = 'none';
+                        if (err.name !== 'NotFoundError') {
+                            console.error('BLE search error:', err);
                         }
                     }
-                    if (!found && outputs.length > 0) {
-                        midiOutput = outputs[0];
-                        select.value = 0;
-                    }
-                    updateMIDIStatus(!!midiOutput);
+
+                    select.value = select.options.length > 0 ? 0 : 'ble-search';
                 }
 
                 refreshMIDIDevices();
@@ -2084,6 +2173,10 @@
             if (!pendingImportData) return;
             importPresetsOnly(pendingImportData);
             pendingImportData = null;
+        });
+
+        document.getElementById('ble-cancel').addEventListener('click', () => {
+            document.getElementById('ble-overlay').style.display = 'none';
         });
 
         document.getElementById('importFileInput').addEventListener('change', (e) => {
