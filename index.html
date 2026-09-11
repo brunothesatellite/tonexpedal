@@ -1267,7 +1267,13 @@
                             const server = await device.gatt.connect();
                             bleDebug('GATT connecté');
                             const service = await server.getPrimaryService('03b80e5a-ede8-4b33-a751-6ce34ec4c700');
-                            bleDebug('Service MIDI trouvé');
+                            bleDebug('Service trouvé, listage characteristics...');
+                            const chars = await service.getCharacteristics();
+                            for (const c of chars) {
+                                const p = c.properties;
+                                bleDebug('Char: ' + c.uuid.substring(0,8) + '... W=' + p.write + ' WNR=' + p.writeWithoutResponse + ' N=' + p.notify + ' I=' + p.indicate + ' R=' + p.read);
+                            }
+
                             bleMidiCharacteristic = await service.getCharacteristic('7772e5db-3868-4112-a1a9-f2669d106bf3');
 
                             const props = bleMidiCharacteristic.properties;
@@ -1315,23 +1321,16 @@
                             testBtn.style.display = 'block';
                             testBtn.onclick = async () => {
                                 if (!bleMidiCharacteristic) return;
-                                bleDebug('--- TEST ---');
-                                const tests = [
-                                    { name: 'PC ch0=5 (header 0x80+0x00)', data: [0x80, 0x00, 0xC0, 0x05] },
-                                    { name: 'PC ch0=5 (no header)', data: [0xC0, 0x05] },
-                                    { name: 'PC ch0=5 (0x80 only)', data: [0x80, 0xC0, 0x05] },
-                                    { name: 'CC0+PC ch0=5', data: [0x80, 0x00, 0xB0, 0x00, 0x00, 0x80, 0x00, 0xC0, 0x05] },
-                                    { name: 'CC0+PC ch0=5 (no header)', data: [0xB0, 0x00, 0x00, 0xC0, 0x05] },
-                                ];
-                                for (const t of tests) {
-                                    bleDebug('TEST: ' + t.name);
+                                bleDebug('--- TEST ALL CHANNELS ---');
+                                for (let ch = 0; ch < 16; ch++) {
+                                    bleDebug('PC ch' + ch + '=0');
                                     try {
-                                        await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array(t.data));
+                                        await bleMidiCharacteristic.writeValueWithoutResponse(new Uint8Array([0x80, 0x00, 0xC0 + ch, 0x00]));
                                         bleDebug('  → OK');
                                     } catch(e) {
                                         bleDebug('  → ERR: ' + e.message);
                                     }
-                                    await new Promise(r => setTimeout(r, 100));
+                                    await new Promise(r => setTimeout(r, 200));
                                 }
                                 bleDebug('--- FIN TEST ---');
                             };
