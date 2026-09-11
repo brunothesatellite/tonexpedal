@@ -112,8 +112,8 @@
         }
 
         .library-panel {
-            width: 400px;
-            min-width: 320px;
+            width: 320px;
+            min-width: 280px;
             border-right: 2px solid #0f3460;
             display: flex;
             flex-direction: column;
@@ -243,7 +243,7 @@
         }
 
         .preset-badges {
-            display: flex;
+            display: none;
             gap: 4px;
         }
 
@@ -284,7 +284,7 @@
 
         .library-toggle {
             position: absolute;
-            left: 396px;
+            left: 316px;
             top: 50%;
             transform: translateY(-50%);
             width: 24px;
@@ -320,6 +320,22 @@
 
         .main-layout.collapsed .library-toggle::after {
             content: '◀';
+        }
+
+        .main-layout.collapsed .grid-btn .btn-slot {
+            font-size: clamp(14px, 5cqi, 30px);
+        }
+
+        .main-layout.collapsed .grid-btn .btn-preset {
+            font-size: clamp(18px, 7cqi, 40px);
+        }
+
+        .main-layout.collapsed .grid-btn .btn-name {
+            font-size: clamp(16px, 6.5cqi, 36px);
+        }
+
+        .main-layout.collapsed .grid-btn .empty-label {
+            font-size: clamp(16px, 6.5cqi, 36px);
         }
 
         .library-toggle::after {
@@ -377,19 +393,19 @@
         }
 
         .grid-btn .btn-slot {
-            font-size: 4cqi;
+            font-size: clamp(12px, 4cqi, 24px);
             color: #533483;
             font-weight: bold;
         }
 
         .grid-btn .btn-preset {
-            font-size: 5.5cqi;
+            font-size: clamp(14px, 5.5cqi, 32px);
             font-weight: bold;
             color: #e94560;
         }
 
         .grid-btn .btn-name {
-            font-size: 5cqi;
+            font-size: clamp(13px, 5cqi, 28px);
             color: #ccc;
             text-align: center;
             overflow: hidden;
@@ -399,7 +415,7 @@
         }
 
         .grid-btn .btn-badges {
-            display: flex;
+            display: none;
             gap: 4px;
         }
 
@@ -409,7 +425,7 @@
         }
 
         .grid-btn .empty-label {
-            font-size: 5cqi;
+            font-size: clamp(13px, 5cqi, 28px);
             color: #555;
         }
 
@@ -659,7 +675,7 @@
     </div>
 
     <footer>
-        <span data-i18n="footerHelp">🔊 AMP &nbsp; 🎛️ CAB &nbsp; | &nbsp; Clic preset = écouter &nbsp; | &nbsp; Drag = assigner / swap</span>
+        <span data-i18n="footerHelp">Clic preset = écouter &nbsp; | &nbsp; Drag = assigner / swap</span>
         <span id="active-preset" data-i18n="activePreset">Preset actif: --</span>
     </footer>
 
@@ -695,7 +711,7 @@
                 trashText: 'Glisser ici pour effacer le bouton',
                 searchPlaceholder: 'Rechercher un preset...',
                 empty: 'Vide',
-                footerHelp: '🔊 AMP &nbsp; 🎛️ CAB &nbsp; | &nbsp; Clic preset = \u00e9couter &nbsp; | &nbsp; Drag = assigner / swap',
+                footerHelp: 'Clic preset = \u00e9couter &nbsp; | &nbsp; Drag = assigner / swap',
                 activePreset: 'Preset actif: ',
                 editTitle: '\u00c9diter le preset',
                 editButton: '\u00c9diter le bouton ',
@@ -732,7 +748,7 @@
                 trashText: 'Drag here to clear button',
                 searchPlaceholder: 'Search a preset...',
                 empty: 'Empty',
-                footerHelp: '🔊 AMP &nbsp; 🎛️ CAB &nbsp; | &nbsp; Click preset = listen &nbsp; | &nbsp; Drag = assign / swap',
+                footerHelp: 'Click preset = listen &nbsp; | &nbsp; Drag = assign / swap',
                 activePreset: 'Active preset: ',
                 editTitle: 'Edit preset',
                 editButton: 'Edit button ',
