@@ -504,7 +504,6 @@
         .color-popover {
             position: absolute;
             top: calc(100% + 6px);
-            right: 0;
             background: #2a2a2a;
             border: 2px solid #4a4a4a;
             border-radius: 8px;
@@ -520,13 +519,13 @@
             content: '';
             position: absolute;
             top: -6px;
-            right: 10px;
+            left: 50%;
+            transform: translateX(-50%) rotate(45deg);
             width: 10px;
             height: 10px;
             background: #2a2a2a;
             border-left: 2px solid #4a4a4a;
             border-top: 2px solid #4a4a4a;
-            transform: rotate(45deg);
         }
 
         .color-swatch {
@@ -1600,11 +1599,14 @@
             document.body.appendChild(popover);
             activeColorPopover = popover;
 
-            // Position popover below the dot
+            // Position popover centered below the dot
             const dotRect = dot.getBoundingClientRect();
             popover.style.position = 'fixed';
             popover.style.top = (dotRect.bottom + 6) + 'px';
-            popover.style.left = Math.min(dotRect.left, window.innerWidth - 180) + 'px';
+            const popWidth = popover.offsetWidth || 180;
+            let left = dotRect.left + dotRect.width / 2 - popWidth / 2;
+            left = Math.max(4, Math.min(left, window.innerWidth - popWidth - 4));
+            popover.style.left = left + 'px';
 
             // Close on click outside
             setTimeout(() => {
