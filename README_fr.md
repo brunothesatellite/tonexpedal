@@ -1,4 +1,4 @@
-﻿﻿# TONEX Pedal Controller
+﻿# TONEX Pedal Controller
 
 Contrôleur web single-page pour l'IK Multimedia TONEX Pedal. Gère les presets via USB MIDI et BLE MIDI, et lit les noms/configurations directement depuis le pédalier via l'interface série USB CDC.
 
@@ -77,26 +77,29 @@ Simplement double-cliquer sur `index.html` ou l'ouvrir via `file:///` dans votre
 
 L'application supporte deux transports de contrôle distincts :
 
-1. **USB MIDI / Web MIDI** — route USB-MIDI classique, stable et prioritaire sur la sélection du preset. C’est la route de référence pour le Bank Select + Program Change.
-2. **BLE MIDI** — route Web Bluetooth expérimentale, visible par l'API du navigateur via un service GATT et une caractéristique dédiée. Elle reproduit la sémantique logique Bank Select + Program Change, mais la trame de paquet est différente de la route USB et doit être considérée comme une extension expérimentale.
+1. **USB MIDI / Web MIDI** — route USB-MIDI classique, stable et prioritaire. Utilise le device USB-MIDI du pédalier pour le Bank Select + Program Change.
+2. **BLE MIDI** — route Web Bluetooth utilisant un service GATT et caractéristique dédiée. Même sémantique Bank Select + Program Change que USB, mais trame de paquet différente (voir Architecture).
 
-La connexion BLE démarre à travers l’interface de scan Web Bluetooth de l’application. Une fois le device choisi, le flux de contrôle transporte la même abstraction logique `bank` + `slot` que le transport USB, mais l'encapsulation GATT sous Web Bluetooth est différente et le protocole est annoncé comme exploitable seulement en branche expérimentale.
+Pour se connecter :
 
-1. Brancher le TONEX Pedal en USB
+1. Brancher le TONEX Pedal en USB-C
 2. Ouvrir l'application dans Chrome/Edge
-3. Sélectionner le device MIDI dans le menu déroulant **Device** ou lancer la recherche BLE si le routeur Web Bluetooth est actif
+3. Sélectionner le device MIDI dans le menu déroulant **Device** (USB), ou cliquer sur **Scan BLE** pour chercher un device Bluetooth
 4. Choisir le canal MIDI (défaut : Ch 1)
 5. Le statut passe à **Connecté** (point vert)
 
-> **Note BLE** : la route BLE est expérimentale et peut se déconnecter rapidement selon le PC. De plus, la plage de presets `42C..49C` (`pc = 128..149`) ne fonctionne pas encore correctement sur ce flux et peut renvoyer la commande vers les presets 00A / au mauvais offset sur le pédalier.
+> **Note** : sur Android, l'API Web MIDI n'est pas disponible. L'application utilise WebUSB pour la communication USB CDC et BLE MIDI pour le contrôle des presets.
 
 ### Synchronisation USB (lecture des presets)
 
+La synchronisation lit les 150 noms de presets et leurs configurations AMP/CAB directement depuis le pédalier via l'interface série USB CDC. Cela nécessite la connexion USB CDC (port série), séparée de la connexion MIDI.
+
 1. Cliquer sur **Sync USB**
 2. Sélectionner le port série TONEX Pedal dans le dialog
-3. La progression s'affiche : Hello → State → Lecture des 150 presets
-4. Les noms se remplissent automatiquement
+3. L'application envoie une commande `HELLO`, lit l'état, puis charge les 150 presets
+4. La barre de progression affiche l'avancement, les noms se remplissent automatiquement dans la bibliothèque
 5. Le bouton affiche **Terminé! X/150 presets lus**
+6. Chaque preset affiche son nom, le badge AMP (orange/vert/bleu) et le badge CAB (orange/vert/bleu) selon la configuration des paramètres
 
 ### Export / Import JSON
 
@@ -126,20 +129,28 @@ Format d'export (v2) :
 
 ### Grille 3×3
 
-- **Clic simple** sur un bouton → envoie le Bank Select + Program Change au pédalier
-- **Glisser** un preset de la bibliothèque → assigne au bouton
-- **Glisser** un bouton vers un autre → swap les positions (les couleurs suivent)
+La grille affiche 9 boutons de presets assignables, organisés en 3 lignes × 3 colonnes. Chaque bouton affiche son numéro bank/slot, le nom du preset et les badges AMP/CAB.
+
+![Affectation couleur](captures/color1.png)
+
+- **Clic simple** sur un bouton → envoie le Bank Select + Program Change au pédalier, le preset actif est mis en surbrillance
+- **Glisser** un preset de la bibliothèque → assigne au bouton (nom, badges et couleur sont transférés)
+- **Glisser** un bouton vers un autre → swap les positions (les couleurs et assignations suivent)
 - **Glisser** un bouton vers la corbeille → vide le bouton et sa couleur
-- **Double-clic** → ouvre le modal d'édition (renommage)
-- **Rond couleur** (coin supérieur droit) → cliquer pour assigner une couleur LED à la tuile
+- **Double-clic** → ouvre le modal d'édition (renommage du preset)
+- **Rond couleur** (coin supérieur droit) → cliquer pour assigner une des 9 couleurs LED (rouge, vert, ambre, jaune, cyan, bleu, rose, violet, blanc) à la tuile
 
 ### Bibliothèque
 
-- **Clic simple** → envoie le MIDI pour écouter le preset
-- **Double-clic** → édite le nom
-- **Recherche** → filtre par nom ou numéro de bank/slot
-- **Glisser** vers la grille → assigne le preset
+Le panneau bibliothèque liste les 150 presets (50 banks × 3 slots A/B/C) et s'affiche à gauche de l'écran sur PC, ou sur Android avec un bouton de réduction optionnel.
+
+- **Clic simple** → envoie le MIDI pour écouter le preset (le charge sur le pédalier)
+- **Double-clic** → édite le nom en ligne
+- **Recherche** → filtre par nom ou numéro de bank/slot (ex. `42` affiche la bank 42, `42C` affiche le slot C de la bank 42)
+- **Glisser** vers la grille → assigne le preset à un bouton
 - **Chevron** (▶/◀) sur la bordure du panneau → minimise/étend la bibliothèque
+
+La bibliothèque se réduit automatiquement lorsqu'un preset est assigné pour libérer de l'espace à l'écran.
 
 ## Architecture technique
 

@@ -75,26 +75,29 @@ Simply double-click `index.html` or open it via `file:///` in your browser.
 
 The application supports two distinct preset-control transports:
 
-1. **USB MIDI / Web MIDI**: a classic Web MIDI route over the pedal's USB-MIDI class device. It remains the default and most stable transport for Bank Select + Program Change.
-2. **BLE MIDI**: an experimental Web Bluetooth route that scans for a TONEX-compatible GATT service using the registered MIDI characteristic. It mirrors the same Bank Select + Program Change model, but it is not wired to the same data flow as the USB transport and is intentionally treated as an experimental branch.
+1. **USB MIDI / Web MIDI**: the default and most stable route. Uses the pedal's USB-MIDI class device for Bank Select + Program Change.
+2. **BLE MIDI**: an experimental Web Bluetooth route using a custom GATT service. Same Bank Select + Program Change semantics as USB, but with different packet framing (see Architecture).
 
-The BLE route is selected by the application from the device picker in the same UI and it emits the same logical Bank Select + Program Change semantics as the USB MIDI branch, but the underlying packet frame is a BLE GATT write wrapped in the custom MIDI packet assembly used by the app.
+To connect:
 
-1. Connect the TONEX Pedal via USB
+1. Connect the TONEX Pedal via USB-C
 2. Open the app in Chrome/Edge
-3. Select the MIDI device in the **Device** dropdown, or run the BLE search flow if the device is advertised through Web Bluetooth
+3. Select the MIDI device in the **Device** dropdown (USB), or click **Scan BLE** to search for a Bluetooth device
 4. Choose the MIDI channel (default: Ch 1)
 5. Status changes to **Connected** (green dot)
 
-> **BLE MIDI support note**: the BLE route is experimental and may disconnect rapidly on some host hardware or browser state. On the current branch it also remains a known limitation that the upper preset window `42C..49C` (`pc = 128..149`) does not yet map reliably. It can fall back to the `00A` range or the wrong bank/slot selection on the pedal. The BLE route for `>= 42C` is therefore documented as incomplete and non-stable.
+> **Note**: On Android, Web MIDI is not available. The app uses WebUSB for USB CDC communication and BLE MIDI for preset control.
 
 ### USB Sync (reading presets)
 
+Sync reads all 150 preset names and their AMP/CAB configurations directly from the pedal via the USB CDC serial interface. This requires the USB CDC connection (serial port), which is separate from the MIDI connection.
+
 1. Click **Sync USB**
 2. Select the TONEX Pedal serial port in the dialog
-3. Progress shows: Hello → State → Reading 150 presets
-4. Names fill in automatically
+3. The app sends a `HELLO` command, reads the state, then streams all 150 presets
+4. Progress bar shows reading progress, names fill in automatically in the library
 5. Button shows **Done! X/150 presets read**
+6. Each preset displays its name, AMP badge (orange/green/blue) and CAB badge (orange/green/blue) based on the parameter configuration
 
 ### Export / Import JSON
 
@@ -124,20 +127,28 @@ Export format (v2):
 
 ### 3×3 Grid
 
-- **Single click** on a button → sends Bank Select + Program Change to the pedal
-- **Drag** a preset from the library → assigns to the button
-- **Drag** a button to another → swaps positions (colors swap too)
+The grid displays 9 assignable preset buttons arranged in 3 rows × 3 columns. Each button shows its bank/slot number, preset name, and AMP/CAB badges.
+
+![Color assignment](captures/color1.png)
+
+- **Single click** on a button → sends Bank Select + Program Change to the pedal, the active preset is highlighted
+- **Drag** a preset from the library → assigns to the button (name, badges and color transfer)
+- **Drag** a button to another → swaps positions (colors and assignments swap too)
 - **Drag** a button to the trash → clears the button and its color
-- **Double-click** → opens edit modal (rename)
-- **Color dot** (top-right corner) → click to assign a LED color to the tile
+- **Double-click** → opens edit modal (rename the preset)
+- **Color dot** (top-right corner) → click to assign one of 9 LED colors (red, green, amber, yellow, cyan, blue, pink, purple, white) to the tile
 
 ### Library
 
-- **Single click** → sends MIDI to audition the preset
-- **Double-click** → edits name
-- **Search** → filters by name or bank/slot number
-- **Drag** to grid → assigns the preset
+The library panel lists all 150 presets (50 banks × 3 slots A/B/C) and is displayed on the left side of the screen on PC, or on Android with an optional toggle.
+
+- **Single click** → sends MIDI to audition the preset (loads it on the pedal)
+- **Double-click** → edits name inline
+- **Search** → filters by name or bank/slot number (e.g. `42` shows bank 42, `42C` shows slot C of bank 42)
+- **Drag** to grid → assigns the preset to a button
 - **Chevron toggle** (▶/◀) on the panel border → minimizes/expands the library
+
+The library collapses automatically when a preset is assigned to free screen space.
 
 ## Technical Architecture
 

@@ -371,21 +371,28 @@ python -m http.server 3000</code></pre>
     </ol>
 
     <div class="info">
-        <strong>Info :</strong> <span data-t="usage-sync-info">Le sync lit les noms de chaque preset.</span>
+        <strong>Info :</strong> <span data-t="usage-sync-info">Le sync lit les noms et les badges AMP/CAB de chaque preset via l'interface série USB CDC.</span>
     </div>
 
     <h3 data-t="usage-interact-title">Interactions</h3>
+
+    <figure class="screenshot">
+        <img src="../captures/color1.png" alt="Affectation couleur à une tuile">
+        <figcaption id="cap-fig-color" data-t="cap-fig-color">Affectation d'une couleur LED à une tuile de la grille</figcaption>
+    </figure>
+
     <table>
         <tr><th data-t="th-action">Action</th><th data-t="th-result">Résultat</th></tr>
         <tr><td data-t="act-click-btn">Clic simple sur un bouton</td><td data-t="act-click-btn-desc">Envoie Bank Select + Program Change au pédalier</td></tr>
         <tr><td data-t="act-click-lib">Clic simple sur un preset de la bibliothèque</td><td data-t="act-click-lib-desc">Envoie le MIDI pour écouter le preset</td></tr>
-        <tr><td data-t="act-drag-lib">Glisser un preset de la bibliothèque → grille</td><td data-t="act-drag-lib-desc">Assigne le preset au bouton</td></tr>
-        <tr><td data-t="act-drag-swap">Glisser un bouton → un autre bouton</td><td data-t="act-drag-swap-desc">Swap les positions</td></tr>
-        <tr><td data-t="act-drag-trash">Glisser un bouton → corbeille</td><td data-t="act-drag-trash-desc">Vide le bouton</td></tr>
-        <tr><td data-t="act-dblclick">Double-clic sur un bouton ou preset</td><td data-t="act-dblclick-desc">Ouvre le modal d'édition (nom)</td></tr>
+        <tr><td data-t="act-drag-lib">Glisser un preset de la bibliothèque → grille</td><td data-t="act-drag-lib-desc">Assigne le preset au bouton (nom, badges et couleur)</td></tr>
+        <tr><td data-t="act-drag-swap">Glisser un bouton → un autre bouton</td><td data-t="act-drag-swap-desc">Swap les positions (couleurs et assignations)</td></tr>
+        <tr><td data-t="act-drag-trash">Glisser un bouton → corbeille</td><td data-t="act-drag-trash-desc">Vide le bouton et sa couleur</td></tr>
+        <tr><td data-t="act-dblclick">Double-clic sur un bouton ou preset</td><td data-t="act-dblclick-desc">Ouvre le modal d'édition (renommage)</td></tr>
+        <tr><td data-t="act-color">Cliquer sur le rond couleur (coin supérieur droit)</td><td data-t="act-color-desc">Assigne une des 9 couleurs LED à la tuile</td></tr>
         <tr><td data-t="act-search">Taper dans la barre de recherche</td><td data-t="act-search-desc">Filtre la bibliothèque par nom ou numéro</td></tr>
-        <tr><td data-t="act-export">Cliquer sur ⬇ JSON</td><td data-t="act-export-desc">Exporte les noms de presets en fichier JSON</td></tr>
-        <tr><td data-t="act-import">Cliquer sur ⬆ JSON</td><td data-t="act-import-desc">Importe un fichier JSON de presets (valide et remplace les noms)</td></tr>
+        <tr><td data-t="act-export">Cliquer sur ⬇ JSON</td><td data-t="act-export-desc">Exporte les noms, assignations et couleurs en JSON</td></tr>
+        <tr><td data-t="act-import">Cliquer sur ⬆ JSON</td><td data-t="act-import-desc">Importe un fichier JSON de configuration</td></tr>
         <tr><td data-t="act-toggle">Cliquer sur le chevron (▶/◀)</td><td data-t="act-toggle-desc">Minimise/étend la bibliothèque de presets</td></tr>
     </table>
 
@@ -613,6 +620,7 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'cap-fig': 'Interface complète — bibliothèque à gauche, grille 3×3 à droite',
             'cap-fig-android': 'Interface complète — Android',
             'cap-fig-videos': 'Démonstrations vidéo — PC & Android',
+            'cap-fig-color': 'Affectation d\'une couleur LED à une tuile',
             'h-features': 'Fonctionnalités',
             'feat-grid': 'Grille 3×3', 'feat-grid-desc': 'de presets assignables avec noms et couleurs',
             'feat-colors': 'Couleurs LED', 'feat-colors-desc': '9 couleurs assignables par tuile (rouge, vert, ambre, jaune, cyan, bleu, rose, violet, blanc)',
@@ -650,18 +658,19 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'usage-sync-2': 'Sélectionner le port série TONEX Pedal',
             'usage-sync-3': 'La progression s\'affiche : Hello → State → 150 presets',
             'usage-sync-4': 'Les noms se remplissent automatiquement',
-            'usage-sync-info': 'Le sync lit les noms de chaque preset.',
+            'usage-sync-info': 'Le sync lit les noms et les badges AMP/CAB de chaque preset via l\'interface série USB CDC.',
             'usage-interact-title': 'Interactions',
             'th-action': 'Action', 'th-result': 'Résultat',
             'act-click-btn': 'Clic simple sur un bouton', 'act-click-btn-desc': 'Envoie Bank Select + Program Change au pédalier',
             'act-click-lib': 'Clic simple sur un preset de la bibliothèque', 'act-click-lib-desc': 'Envoie le MIDI pour écouter le preset',
-            'act-drag-lib': 'Glisser un preset de la bibliothèque → grille', 'act-drag-lib-desc': 'Assigne le preset au bouton',
-            'act-drag-swap': 'Glisser un bouton → un autre bouton', 'act-drag-swap-desc': 'Swap les positions',
-            'act-drag-trash': 'Glisser un bouton → corbeille', 'act-drag-trash-desc': 'Vide le bouton',
-            'act-dblclick': 'Double-clic sur un bouton ou preset', 'act-dblclick-desc': 'Ouvre le modal d\'édition (nom)',
+            'act-drag-lib': 'Glisser un preset de la bibliothèque → grille', 'act-drag-lib-desc': 'Assigne le preset au bouton (nom, badges et couleur)',
+            'act-drag-swap': 'Glisser un bouton → un autre bouton', 'act-drag-swap-desc': 'Swap les positions (couleurs et assignations)',
+            'act-drag-trash': 'Glisser un bouton → corbeille', 'act-drag-trash-desc': 'Vide le bouton et sa couleur',
+            'act-dblclick': 'Double-clic sur un bouton ou preset', 'act-dblclick-desc': 'Ouvre le modal d\'édition (renommage)',
+            'act-color': 'Cliquer sur le rond couleur (coin supérieur droit)', 'act-color-desc': 'Assigne une des 9 couleurs LED à la tuile',
             'act-search': 'Taper dans la barre de recherche', 'act-search-desc': 'Filtre la bibliothèque par nom ou numéro',
-            'act-export': 'Cliquer sur ⬇ JSON', 'act-export-desc': 'Exporte les noms de presets en fichier JSON',
-            'act-import': 'Cliquer sur ⬆ JSON', 'act-import-desc': 'Importe un fichier JSON de presets (valide et remplace les noms)',
+            'act-export': 'Cliquer sur ⬇ JSON', 'act-export-desc': 'Exporte les noms, assignations et couleurs en JSON',
+            'act-import': 'Cliquer sur ⬆ JSON', 'act-import-desc': 'Importe un fichier JSON de configuration',
             'act-toggle': 'Cliquer sur le chevron (▶/◀)', 'act-toggle-desc': 'Minimise/étend la bibliothèque de presets',
             'h-arch': 'Architecture technique',
             'h-midi-proto': 'Protocole MIDI',
@@ -729,6 +738,7 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'cap-fig': 'Full interface — library on the left, 3×3 grid on the right',
             'cap-fig-android': 'Full interface — Android',
             'cap-fig-videos': 'Video demonstrations — PC & Android',
+            'cap-fig-color': 'LED color assignment on a grid tile',
             'h-features': 'Features',
             'feat-grid': '3×3 Grid', 'feat-grid-desc': 'of assignable presets with names and colors',
             'feat-colors': 'LED Colors', 'feat-colors-desc': '9 assignable colors per tile (red, green, amber, yellow, cyan, blue, pink, purple, white)',
@@ -766,18 +776,19 @@ transportDisconnect()     → serialPort.close() ou usbDevice.close()</code></pr
             'usage-sync-2': 'Select the TONEX Pedal serial port',
             'usage-sync-3': 'Progress shows: Hello → State → 150 presets',
             'usage-sync-4': 'Names fill automatically',
-            'usage-sync-info': 'Sync reads names for each preset.',
+            'usage-sync-info': 'Sync reads names and AMP/CAB badges for each preset via the USB CDC serial interface.',
             'usage-interact-title': 'Interactions',
             'th-action': 'Action', 'th-result': 'Result',
             'act-click-btn': 'Click a button', 'act-click-btn-desc': 'Sends Bank Select + Program Change to the pedal',
             'act-click-lib': 'Click a library preset', 'act-click-lib-desc': 'Sends MIDI to audition the preset',
-            'act-drag-lib': 'Drag preset from library → grid', 'act-drag-lib-desc': 'Assigns the preset to the button',
-            'act-drag-swap': 'Drag a button → another button', 'act-drag-swap-desc': 'Swaps positions',
-            'act-drag-trash': 'Drag a button → trash', 'act-drag-trash-desc': 'Clears the button',
-            'act-dblclick': 'Double-click a button or preset', 'act-dblclick-desc': 'Opens edit modal (name)',
+            'act-drag-lib': 'Drag preset from library → grid', 'act-drag-lib-desc': 'Assigns the preset to the button (name, badges and color)',
+            'act-drag-swap': 'Drag a button → another button', 'act-drag-swap-desc': 'Swaps positions (colors and assignments)',
+            'act-drag-trash': 'Drag a button → trash', 'act-drag-trash-desc': 'Clears the button and its color',
+            'act-dblclick': 'Double-click a button or preset', 'act-dblclick-desc': 'Opens edit modal (rename)',
+            'act-color': 'Click the color dot (top-right corner)', 'act-color-desc': 'Assigns one of 9 LED colors to the tile',
             'act-search': 'Type in the search bar', 'act-search-desc': 'Filters the library by name or number',
-            'act-export': 'Click ⬇ JSON', 'act-export-desc': 'Exports preset names to a JSON file',
-            'act-import': 'Click ⬆ JSON', 'act-import-desc': 'Imports a JSON preset file (validates and replaces names)',
+            'act-export': 'Click ⬇ JSON', 'act-export-desc': 'Exports names, assignments and colors to JSON',
+            'act-import': 'Click ⬆ JSON', 'act-import-desc': 'Imports a JSON configuration file',
             'act-toggle': 'Click the chevron (▶/◀)', 'act-toggle-desc': 'Minimizes/expands the preset library',
             'h-arch': 'Technical Architecture',
             'h-midi-proto': 'MIDI Protocol',
