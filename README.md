@@ -44,8 +44,6 @@ Android demo vido:
 | BLE | BLE MIDI requires a secure origin such as localhost/HTTPS and a Web Bluetooth-enabled device/browser. The selected device must expose the known service UUID `03b80e5a-ede8-4b33-a751-6ce34ec4c700` and characteristic `7772e5db-3868-4112-a1a9-f2669d106bf3` |
 
 > **Note**: On Android, Web Serial is not available — the app falls back to WebUSB for USB CDC communication. MIDI is not available on Android (no Web MIDI API).
->
-> **Experimental BLE note**: BLE MIDI is an experimental transport branch. It can disconnect rapidly on some hosts or browsers and should not be considered fully robust. In the current implementation the BLE branch is intentionally isolated from the USB/Web Serial path and is documented as an experimental control route for the same preset mapping model.
 
 ## Installation
 
@@ -195,21 +193,24 @@ For the USB / Web MIDI flow, the transport semantics are:
 [0xC0 + channel, PC]      -> Program Change payload
 ```
 
-For the BLE transport the code assembles a consolidated packet and supports a BLE-specific circuit in the same `bankSelectAndPC(bank, slot)` path:
+For the BLE transport the code assembles a consolidated GATT write packet following the Apple BLE MIDI spec:
 
 ```
-[0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal]
+[0x80, 0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal]
 ```
 
-where:
+BLE MIDI packet framing:
 
-- `midiCh = 0xB0 + channel`
-- `bankVal = 0` for the first bank window (`pc = 0..127`)
-- `bankVal = 1` only for the upper-bank USB-style window when the range is treated as a continuation through `pc = 128..149`
-- `pcVal = pc` for `0..127`
-- `pcVal = pc - 128` for the upper bank `128..149`
+- `0x80` — packet header (timestamp MSB)
+- `0x80` — delta-time for CC#0 message (delta = 0)
+- `midiCh` — CC status byte (`0xB0 + channel`)
+- `0` — controller number (CC#0 = Bank Select MSB)
+- `bankVal` — `0` for pc 0..127, `1` for pc 128..149
+- `0x80` — delta-time for PC message (delta = 0)
+- `0xC0 + ch` — Program Change status byte
+- `pcVal` — `pc` for 0..127, `pc - 128` for 128..149
 
-This is the BLE packet assembly used by the codebase. It is intentionally not identical to the USB-MIDI `CC#0`/`PC` separate writes because the BLE service performs write-through as a GATT characteristic call and expects the payload to be a serialized MIDI stream.
+Each MIDI message in a BLE packet must be preceded by a delta-time byte (bit 7 set). Without the explicit `0x80` delta-time before `midiCh`, the parser interprets `midiCh` (0xB0+ch, bit 7 set) as a delta-time byte and silently drops the entire Bank Select — the PC then falls back to the default bank page 0.
 
 The transport distinction is therefore:
 
@@ -310,14 +311,6 @@ Everything is saved in `localStorage` under the key `tonex-state`:
 | AMP/CAB always grey | Check console for correct float32 values (log for first 3 presets) |
 | Blank page after load | Reload the page, localStorage may be corrupted |
 | Android: Sync doesn't read data | WebUSB fallback should auto-activate. Check console for interface/endpoint logs |
-
-## Known bugs and transport limitations
-
-The current BLE MIDI branch is experimental and should be considered unstable. This project documents the following limitations explicitly:
-
-- **BLE MIDI may disconnect quickly**: the BLE MIDI channel can appear to disconnect unexpectedly after one or a few writes. This can be caused by host/browser power management, GATT disconnection, or by the local PC/BLE stack. It should not be interpreted as a stable transport yet.
-- **Preset range `42C..49C` (`pc = 128..149`) is not yet implemented reliably**: the BLE route has been observed to fall back to `00A` or a mismatched bank/slot route when the preset index is above the first bank span. The range `pc >= 128` is therefore documented as currently unreliable for BLE and must not be treated as a stable production route.
-- **USB/Web MIDI remains the stable reference**: the USB path and the serial sync remain the fully documented and intentionally trusted routes. BLE is only an experimental companion route for preset control.
 
 ## Credits
 

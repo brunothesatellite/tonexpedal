@@ -1,4 +1,4 @@
-# TONEX Pedal Controller
+﻿﻿# TONEX Pedal Controller
 
 Contrôleur web single-page pour l'IK Multimedia TONEX Pedal. Gère les presets via USB MIDI et BLE MIDI, et lit les noms/configurations directement depuis le pédalier via l'interface série USB CDC.
 
@@ -46,8 +46,6 @@ Démo vidéo Android :
 > **Note** : L'API Web Serial nécessite HTTPS ou localhost. Servir via un serveur web local (ex: `https://mon-serveur/tonexpedal/`) ou `localhost`.
 
 > **Note Android** : Sur Android, Web Serial n'est pas disponible — l'application utilise le fallback WebUSB pour la communication USB CDC. Le MIDI n'est pas disponible sur Android (pas d'API Web MIDI).
->
-> **Note BLE expérimentale** : la couche BLE MIDI est une route expérimentalement documentée. Elle peut se déconnecter rapidement selon le PC, le système d’exploitation, ou la pile GATT du navigateur. La couche BLE ne doit pas être considérée comme stable au niveau production.
 
 ## Installation
 
@@ -198,20 +196,21 @@ Pour le flux USB / Web MIDI, la sémantique de transport est bien connue :
 Pour le transport BLE, la couche d’application sérialise la sélection de preset par une trame GATT de paquet MIDI unique :
 
 ```
-[0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal]
+[0x80, 0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal]
 ```
 
-avec :
+avec le framing BLE MIDI :
 
-- `midiCh = 0xB0 + canal`
-- `bankVal = 0` pour la plage `0..127`
-- `bankVal = 1` uniquement dans la fenêtre de cartographie haute `128..149`
-- `pcVal = pc` pour `0..127`
-- `pcVal = pc - 128` pour `128..149`
+- `0x80` — en-tête du paquet (timestamp MSB)
+- `0x80` — delta-time pour le message CC#0 (delta = 0)
+- `midiCh` — octet de statut CC (`0xB0 + canal`)
+- `0` — numéro de contrôleur (CC#0 = Bank Select MSB)
+- `bankVal` — `0` pour pc 0..127, `1` pour pc 128..149
+- `0x80` — delta-time pour le message PC (delta = 0)
+- `0xC0 + ch` — octet de statut Program Change
+- `pcVal` — `pc` pour 0..127, `pc - 128` pour 128..149
 
-Cette trame est conservée dans l’architecture logique, mais elle doit être vue comme un paquet de transport BLE distinct du flux USB-MIDI classique. USB et BLE n’ont pas le même endpoint de transport, même si la couche applicative de presets dans `bank` + `slot` est la même.
-
-
+Chaque message MIDI dans un paquet BLE doit être précédé d'un octet delta-time (bit 7 à 1). Sans le `0x80` delta-time explicite avant `midiCh`, l'interpréteur traite `midiCh` (0xB0+ch, bit 7 à 1) comme un octet delta-time et supprime silencieusement le Bank Select — le PC retombe alors sur la page de banque par défaut 0.
 
 #### Trame HDLC
 
@@ -305,14 +304,6 @@ Tout est sauvegardé en `localStorage` sous la clé `tonex-state` :
 | AMP/CAB toujours gris | Vérifier dans la console que les float32 sont correctement lus |
 | Canvas vide | Recharger la page, le localStorage peut être corrompu |
 | Android : Sync ne lit pas les données | Le fallback WebUSB devrait s'activer automatiquement. Vérifier les logs d'interface/endpoint dans la console |
-
-## Bugs connus et limites de transport
-
-La branche BLE MIDI est actuellement documentée comme une route expérimentale. Les limitations connues sont les suivantes :
-
-- **La connexion BLE peut se déconnecter rapidement** : la couche BLE MIDI peut sembler se déconnecter après un ou quelques writes, en fonction du PC, du navigateur, et de la pile GATT locale. Cette observation est présentée comme une limite expérimentale, pas comme un comportement stable de production.
-- **La plage `42C..49C` (`pc = 128..149`) n’est pas encore prise en charge correctement** : la route BLE semble renvoyer parfois sur le preset `00A` ou sur un preset de mauvais bank/slot. Le comportement de la branche BLE pour ces presets supérieurs est donc signalé comme un bug connu et non corrigé : le peset `>= 42C` n’est pas encore routé de façon fiable.
-- **USB/Web MIDI reste la référence stable** : la route USB-MIDI et la route USB CDC de lecture des presets restent la base de travail qui doit être considérée comme la source de vérité. La branche BLE est seulement une route expérimentale de lecture/contrôle de preset en parallèle.
 
 ## Crédits
 
