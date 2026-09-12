@@ -1125,7 +1125,7 @@
             if (midiOutput.isBLE) {
                 const bankVal = pc > 127 ? 1 : 0;
                 const pcVal = pc > 127 ? pc - 128 : pc;
-                const packet = [0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal];
+                const packet = [0x80, 0x80, midiCh, 0, bankVal, 0x80, 0xC0 + ch, pcVal];
                 bleDebug('SEND: ' + packet.map(b => '0x' + b.toString(16).padStart(2,'0')).join(' '));
                 await midiOutput.send(packet);
             } else {
