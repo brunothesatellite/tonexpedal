@@ -1990,9 +1990,13 @@
                 return;
             }
 
-            // Try Web Serial first, then WebUSB fallback
+            // Try Web Serial first (PC only), then WebUSB fallback
             useUsb = false;
-            if ('serial' in navigator) {
+            const isAndroidUA = /Android/i.test(navigator.userAgent);
+            if (isAndroidUA) {
+                // Android : skip Web Serial (son selecteur liste les ports Bluetooth)
+                console.log('[SYNC] Android -> WebUSB');
+            } else if ('serial' in navigator) {
                 try {
                     serialPort = await navigator.serial.requestPort();
                     await serialPort.open({ baudRate: 115200 });
